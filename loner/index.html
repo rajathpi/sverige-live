@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Löner · Sverige Live</title>
+<meta name="description" content="Monthly salaries for every occupation in Sweden, 2014–2025: spread, women and men, trends, age, education, region, leaderboards and current job ads. SCB data, nothing behind a login.">
+<script>(function(){var t=null;try{t=new URLSearchParams(location.search).get("theme")||localStorage.getItem("hubTheme")}catch(e){}document.documentElement.dataset.theme=t==="dark"?"dark":"light"})()</script>
+<link rel="stylesheet" href="../assets/css/kit.css">
+<link rel="stylesheet" href="../assets/css/base.css">
+<script src="../assets/js/theme.js" defer></script>
+<link rel="stylesheet" href="loner.css">
+</head>
+<body>
+<header class="topbar"><div class="in"><a class="brand" href="../">Sverige <span>Live</span></a><nav class="nav" aria-label="Dashboards"><a href="../economy/">Economy</a><a href="../goteborg/">Göteborg</a><a href="../kommuner/">Kommuner</a><a href="../loner/" aria-current="page">Löner</a></nav><span class="sp"></span>
+  <div class="seg" id="langSeg" role="group" aria-label="Language"><button type="button" data-l="en" class="on">EN</button><button type="button" data-l="sv">SV</button></div>
+  <span data-hub-theme-slot></span></div></header>
+
+<main class="wrap">
+  <section class="pagehead">
+    <h1 data-t="h1">Löner <span>by occupation</span></h1>
+    <p data-t="lead">Monthly salaries for every occupation in Sweden, 2014–2025, from SCB's salary structure statistics. Pick up to five occupations to compare.</p>
+    <div class="status" id="status" role="status"><span class="dot" aria-hidden="true"></span><span>Connecting to SCB…</span></div>
+  </section>
+
+  <div class="grid">
+    <section class="card span-12 controls" aria-labelledby="ctlTitle">
+      <h2 class="sr-only" id="ctlTitle">Choose occupations</h2>
+      <div class="crow">
+        <div class="fld grow"><span data-t="occs">Occupations</span>
+          <div class="search">
+            <input type="search" id="q" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="sug" aria-autocomplete="list">
+            <ul id="sug" class="sug" role="listbox" hidden></ul>
+          </div>
+        </div>
+        <label class="fld"><span data-t="sector">Sector</span><select id="secSel"></select></label>
+        <div class="fld"><span data-t="sex">Sex</span>
+          <div class="seg" id="sexSeg" role="group"><button type="button" data-k="1+2" class="on" data-t="total">Total</button><button type="button" data-k="2" data-t="women">Women</button><button type="button" data-k="1" data-t="men">Men</button></div>
+        </div>
+        <label class="fld"><span data-t="year">Year</span><select id="yearSel"></select></label>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div class="hint" id="hint" aria-live="polite"></div>
+      <div class="actions">
+        <button class="btn sm" id="browseBtn" type="button" aria-expanded="false" aria-controls="browser" data-t="browse">Browse all occupations</button>
+        <button class="btn sm" id="copyLink" type="button" data-t="copy">Copy link to this view</button>
+        <button class="btn sm" id="clearSel" type="button" data-t="clear">Clear</button>
+      </div>
+      <div id="browser" class="browser" hidden></div>
+    </section>
+
+    <section class="span-12 kpis" id="kpis" aria-label="Key figures"></section>
+
+    <section class="card span-7">
+      <h2 data-t="spreadT">How pay is spread</h2>
+      <p class="sub" id="spreadSub"></p>
+      <div class="legend boxkey"><span><i class="bx"></i><span data-t="kBox">middle half (25th–75th percentile)</span></span><span><i class="wk"></i><span data-t="kWhisk">10th–90th percentile</span></span><span><i class="md"></i><span data-t="kMed">median</span></span><span><i class="av"></i><span data-t="kAvg">average</span></span></div>
+      <div class="chart" id="spread"><div class="loading">Loading…</div></div>
+      <p class="src">SCB, <span data-t="srcDisp">average salary and salary dispersion by sector, occupation and sex</span> (TAB4265, TAB5932).</p>
+    </section>
+
+    <section class="card span-5">
+      <h2 data-t="standT">Where do you stand?</h2>
+      <p class="sub" data-t="standSub">Type a monthly salary before tax, in kronor. It stays in your browser.</p>
+      <div class="stand"><input type="text" id="mySal" inputmode="numeric" placeholder="42 000" aria-label="Your monthly salary"><span>kr</span></div>
+      <div id="standOut" class="standout"></div>
+      <p class="src" data-t="standNote">Estimated by drawing straight lines between the published percentiles (10, 25, 50, 75, 90).</p>
+    </section>
+
+    <section class="card span-12">
+      <div class="headrow">
+        <div><h2 data-t="trendT">Over time</h2><p class="sub" id="trendSub"></p></div>
+        <div class="tools">
+          <div class="seg" id="measSeg" role="group"><button type="button" data-m="med" class="on" data-t="mMed">Median</button><button type="button" data-m="avg" data-t="mAvg">Average</button><button type="button" data-m="p10">P10</button><button type="button" data-m="p25">P25</button><button type="button" data-m="p75">P75</button><button type="button" data-m="p90">P90</button></div>
+          <label class="tog"><input type="checkbox" id="projTog" checked> <span data-t="proj">Project forward</span></label>
+          <label class="tog"><input type="checkbox" id="idxTog"> <span data-t="idx">Index, 2014 = 100</span></label>
+        </div>
+      </div>
+      <div class="legend" id="trendLegend"></div>
+      <div class="chart" id="trend"><div class="loading">Loading…</div></div>
+      <p class="src" data-t="trendNote">Dashed lines carry each occupation's average yearly change over its last five years forward. That is a guess, not a statistic. In 2018 municipalities and regions recoded some jobs, so occupations common there can jump that year.</p>
+    </section>
+
+    <section class="card span-6">
+      <h2 data-t="genderT">Women and men</h2>
+      <p class="sub" id="genderSub"></p>
+      <div class="legend"><span><i style="background:var(--c2)"></i><span data-t="women">Women</span></span><span><i style="background:var(--c6)"></i><span data-t="men">Men</span></span></div>
+      <div class="chart" id="gender"><div class="loading">Loading…</div></div>
+    </section>
+
+    <section class="card span-6">
+      <h2 data-t="ratioT">Women's pay as a share of men's</h2>
+      <p class="sub" data-t="ratioSub">Women's median as a percentage of men's, every year. 100 % means equal.</p>
+      <div class="chart" id="ratio"><div class="loading">Loading…</div></div>
+    </section>
+
+    <section class="card span-4">
+      <h2 data-t="ageT">By age</h2>
+      <p class="sub" id="ageSub"></p>
+      <div class="chart" id="age"><div class="loading">Loading…</div></div>
+      <p class="src">SCB TAB4264, TAB5844.</p>
+    </section>
+    <section class="card span-4">
+      <h2 data-t="eduT">By education</h2>
+      <p class="sub" id="eduSub"></p>
+      <div class="chart" id="edu"><div class="loading">Loading…</div></div>
+      <p class="src">SCB TAB4263, TAB5841.</p>
+    </section>
+    <section class="card span-4">
+      <h2 data-t="regT">By region</h2>
+      <p class="sub" id="regSub"></p>
+      <div class="chart" id="reg"><div class="loading">Loading…</div></div>
+      <p class="src">SCB TAB4262, TAB5696.</p>
+    </section>
+
+    <section class="card span-7">
+      <div class="headrow">
+        <div><h2 data-t="lbT">Leaderboards</h2><p class="sub" id="lbSub"></p></div>
+        <div class="seg wrapseg" id="lbSeg" role="group"><button type="button" data-b="top" class="on" data-t="lbTop">Highest</button><button type="button" data-b="low" data-t="lbLow">Lowest</button><button type="button" data-b="grow" data-t="lbGrow">Fastest growth</button><button type="button" data-b="big" data-t="lbBig">Most employees</button><button type="button" data-b="gap" data-t="lbGap">Widest gender gap</button></div>
+      </div>
+      <ol class="lb" id="lb"><li class="loading">Loading…</li></ol>
+      <p class="src" data-t="lbNote">Click a row to add it to the comparison. Medians for the chosen sector and year; growth is per year over five years.</p>
+    </section>
+
+    <section class="card span-5">
+      <h2 data-t="relT">Nearby occupations</h2>
+      <p class="sub" id="relSub"></p>
+      <ol class="lb rel" id="rel"><li class="loading">Loading…</li></ol>
+    </section>
+
+    <section class="card span-12">
+      <h2 data-t="jobsT">Job ads right now</h2>
+      <p class="sub" id="jobsSub"></p>
+      <div class="jobs" id="jobs"><div class="loading">Loading…</div></div>
+      <p class="src"><span data-t="jobsSrc">Open ads in Platsbanken, read live from Arbetsförmedlingen's</span> <a href="https://jobtechdev.se/en/products/jobsearch">JobSearch API</a> (JobTech).</p>
+    </section>
+
+    <section class="card span-12 methods">
+      <h2 data-t="methT">Sources and methods</h2>
+      <div id="methods"></div>
+    </section>
+  </div>
+
+  <footer class="footer">
+    <span>Data: <a href="https://www.scb.se/en/finding-statistics/statistics-by-subject-area/labour-market/wages-salaries-and-labour-costs/wage-and-salary-structures-and-employment-in-the-primary-municipalities/">SCB, salary structure statistics</a> for <a href="https://www.mi.se/">Medlingsinstitutet</a> (CC0) · <a href="https://www.scb.se/en/services/open-data-api/pxwebapi/">PxWebApi 2.0</a> · job ads <a href="https://jobtechdev.se">JobTech / Arbetsförmedlingen</a></span>
+    <span>Code: MIT · <a href="https://github.com/rajathpi/sverige-live">github.com/rajathpi/sverige-live</a></span>
+  </footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="../assets/js/core.js"></script>
+<script src="i18n.js"></script>
+<script src="loner.js"></script>
+</body>
+</html>

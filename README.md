@@ -9,6 +9,7 @@ Dashboards on Swedish open data. They update when the agencies publish.
 | [Economy](https://rajathpi.github.io/sverige-live/economy/) | Inflation (CPIF, CPI) against the policy rate, unemployment, house prices by region, business and consumer confidence, EUR/SEK, and a calendar of the next releases | SCB, Sveriges Riksbank, Konjunkturinstitutet | GitHub Action, three times every weekday |
 | [Göteborg](https://rajathpi.github.io/sverige-live/goteborg/) | Weather now and the next 48 hours, Sweden's electricity production by source this hour, the SE3 electricity price, police reports | SMHI, Svenska kraftnät, Polisen, elprisetjustnu.se | Fetched in the browser, refreshed while the page is open |
 | [Kommuner](https://rajathpi.github.io/sverige-live/kommuner/) | All 290 municipalities on a map for taxes, schools, elder care, health, jobs and safety; pick any and compare them | Kolada (RKA) | Fetched in the browser on every visit |
+| [Löner](https://rajathpi.github.io/sverige-live/loner/) | Monthly pay for all 429 occupations, 2014–2025: percentiles, women and men, trends with a projection, age, education, region, leaderboards, where your own salary lands, and open job ads. English and Swedish | SCB, Arbetsförmedlingen (JobTech) | Fetched in the browser on every visit |
 
 Plain HTML, CSS and JavaScript with [D3](https://d3js.org) for the charts. No build step, no tracking, no API keys. The look (Mona Sans, Hubot Sans, the light/dark switch) is the theme kit from [Studio Hub](https://github.com/rajathpi/studio-hub).
 
@@ -17,7 +18,7 @@ Plain HTML, CSS and JavaScript with [D3](https://d3js.org) for the charts. No bu
 Some agencies send the CORS headers a web page needs, so those pages call the
 APIs directly from your browser:
 
-- SMHI open data, Svenska kraftnät's control room, Polisen's events API and Kolada are fetched by `goteborg/` and `kommuner/` every time the page opens, and refreshed on a timer while it stays open (paused when the tab is hidden).
+- SMHI open data, Svenska kraftnät's control room, Polisen's events API, Kolada, SCB's PxWebApi and JobTech are fetched by `goteborg/`, `kommuner/` and `loner/` every time the page opens, and refreshed on a timer while it stays open (paused when the tab is hidden).
 
 The Riksbank's SWEA API and Konjunkturinstitutet's statistics database cannot be
 called from a browser, so the economy figures are collected by a scheduled job:
@@ -44,6 +45,7 @@ assets/geo/kommuner.geojson simplified municipality borders
 economy/                    Economy (reads data/economy.json)
 goteborg/                   Göteborg (live browser fetches)
 kommuner/                   Kommuner (live Kolada fetches)
+loner/                      Löner (live SCB and JobTech fetches; i18n.js holds the English and Swedish text)
 data/economy.json           written by the scheduled job
 scripts/update_economy.py   fetches SCB, Riksbank and Konjunkturinstitutet series
 .github/workflows/          the schedule
@@ -65,7 +67,8 @@ The code is MIT licensed (see [LICENSE](LICENSE)). The data belongs to the publi
 
 | Source | Used for | Terms |
 |---|---|---|
-| [SCB, Statistics Sweden](https://www.scb.se/en/) (PxWebApi 2.0) | CPIF, CPI, Labour Force Survey, real estate price index | Open data, CC0 |
+| [SCB, Statistics Sweden](https://www.scb.se/en/) (PxWebApi 2.0) | CPIF, CPI, Labour Force Survey, real estate price index, salary structure statistics | Open data, CC0 |
+| [Arbetsförmedlingen, JobTech](https://jobtechdev.se) (JobSearch, Taxonomy) | Open job ads per occupation | Open data, source named |
 | [Sveriges Riksbank](https://www.riksbank.se/en-gb/statistics/) (SWEA API, calendar) | Policy rate, EUR/SEK, decision dates | Free to use with the source named |
 | [Konjunkturinstitutet](https://www.konj.se/english.html) (statistics database) | Economic Tendency Indicator, consumer confidence | Free to use with the source named |
 | [SMHI Open Data](https://www.smhi.se/data) | Observations at Göteborg A, SNOW1g point forecast | CC BY 4.0 |

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sverige Live</title>
-<meta name="description" content="Dashboards on Swedish open data: the economy, Göteborg right now, and all 290 kommuner compared.">
+<meta name="description" content="Dashboards on Swedish open data: the economy, Göteborg right now, all 290 kommuner compared, and salaries for every occupation.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2318181b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 17l5-5 4 3 7-8'/%3E%3Cpath d='M15 7h4v4'/%3E%3C/svg%3E">
 <script>(function(){var t=null;try{t=new URLSearchParams(location.search).get("theme")||localStorage.getItem("hubTheme")}catch(e){}document.documentElement.dataset.theme=t==="dark"?"dark":"light"})()</script>
 <link rel="stylesheet" href="assets/css/kit.css">
@@ -14,7 +14,7 @@
   body { display: flex; flex-direction: column; align-items: center; padding: 11vh 24px 48px; min-height: 100vh; }
   h1 { font-size: 44px; text-align: center; margin: 0; }
   .lead { color: var(--muted); font-size: 14px; margin: 12px 0 46px; text-align: center; }
-  #grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; width: 100%; max-width: 980px; }
+  #grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; width: 100%; max-width: 760px; }
   .tile { background: var(--h-panel); border: 1px solid var(--h-border); border-radius: 16px; padding: 24px 22px 20px; min-height: 200px; color: inherit; text-decoration: none;
     display: flex; flex-direction: column; justify-content: space-between; gap: 26px; transition: transform .15s ease, border-color .15s ease, background-color .15s ease; }
   .tile:hover { transform: translateY(-3px); border-color: var(--h-text); background: var(--h-btn); }
@@ -46,6 +46,7 @@
   @keyframes ic-draw { 0% { stroke-dashoffset: 1; } 35%, 80% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 1; } }
   .gb .rays { animation: ic-spin 9s linear infinite; }
   @keyframes ic-spin { to { transform: rotate(360deg); } }
+  .ln .coin { animation: ic-hop 2.4s cubic-bezier(.5,0,.5,1) infinite; animation-delay: .4s; }
   .km .pin { animation: ic-hop 2.4s cubic-bezier(.5,0,.5,1) infinite; }
   @keyframes ic-hop { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-2px); } }
   @media (prefers-reduced-motion: reduce) { .plate svg * { animation: none !important; } .plate { transition: none; } }
@@ -71,10 +72,15 @@
     <span class="txt"><b>Kommuner <em>compared</em></b><small>All 290 on a map: tax, schools, care, health, jobs, safety</small>
       <span class="now"><span><b>290</b>kommuner</span><span><b id="k1">–</b>tax, Göteborg</span></span></span>
   </a>
+  <a class="tile" href="loner/">
+    <span class="icon"><span class="plate"><svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8" width="17" height="11" rx="2"/><path d="M8.5 8V6.2c0-.9.7-1.7 1.7-1.7h3.6c.9 0 1.7.8 1.7 1.7V8"/><path d="M3.5 13h17"/><g class="coin"><circle cx="12" cy="13" r="1.6" fill="var(--plate-a)"/></g></g></svg></span></span>
+    <span class="txt"><b>Löner <em>by occupation</em></b><small>Pay for all 429 occupations: spread, women and men, age, region, job ads</small>
+      <span class="now"><span><b id="l1">–</b>median, all jobs</span><span><b id="l2">–</b>top median</span></span></span>
+  </a>
 </nav>
 
 <footer>
-  Data from SCB, Sveriges Riksbank, Konjunkturinstitutet, SMHI, Svenska kraftnät, Polisen and Kolada. Each page names its sources.<br>
+  Data from SCB, Sveriges Riksbank, Konjunkturinstitutet, SMHI, Svenska kraftnät, Polisen, Kolada and Arbetsförmedlingen. Each page names its sources.<br>
   <a href="https://github.com/rajathpi/sverige-live">Source on GitHub</a> · MIT
 </footer>
 
@@ -101,6 +107,12 @@
     const k = await SL.fetchJSON("https://api.kolada.se/v3/data/kpi/N00901/municipality/1480/year/" + [0, 1, 2].map((i) => new Date().getFullYear() + 1 - i).join(","), { cacheMinutes: 60 });
     const v = k.values.sort((a, b) => b.period - a.period)[0];
     if (v) set("k1", SL.fmt(v.values.find((x) => x.gender === "T").value, 2) + " %");
+  } catch (e) { /* ignore */ }
+  try {
+    const base = "https://api.scb.se/ov0104/v2beta/api/v2/tables/TAB5932/data?lang=en&outputFormat=json-stat2&valueCodes%5BSektor%5D=0&valueCodes%5BKon%5D=1%2B2&valueCodes%5BContentsCode%5D=000007CE&valueCodes%5BTid%5D=top(1)";
+    const d = await SL.fetchJSON(base + "&valueCodes%5BYrke2012%5D=*", { cacheMinutes: 180 });
+    const all = d.value[d.dimension.Yrke2012.category.index["0000"]];
+    set("l1", SL.fmt(all) + " kr"); set("l2", SL.fmt(Math.max(...d.value.filter((v) => v != null))) + " kr");
   } catch (e) { /* ignore */ }
 })();
 </script>
