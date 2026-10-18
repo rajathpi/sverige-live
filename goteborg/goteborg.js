@@ -150,7 +150,20 @@
     }).filter((r) => isFinite(r.t));
     return { created: j.createdTime || j.referenceTime, rows };
   }
-  const SYM = { 1: ["☀️", "Clear sky"], 2: ["🌤️", "Nearly clear sky"], 3: ["⛅", "Variable cloudiness"], 4: ["⛅", "Half-clear sky"], 5: ["🌥️", "Cloudy"], 6: ["☁️", "Overcast"], 7: ["🌫️", "Fog"], 8: ["🌦️", "Light rain showers"], 9: ["🌦️", "Moderate rain showers"], 10: ["🌧️", "Heavy rain showers"], 11: ["⛈️", "Thunderstorm"], 12: ["🌨️", "Light sleet showers"], 13: ["🌨️", "Moderate sleet showers"], 14: ["🌨️", "Heavy sleet showers"], 15: ["🌨️", "Light snow showers"], 16: ["❄️", "Moderate snow showers"], 17: ["❄️", "Heavy snow showers"], 18: ["🌧️", "Light rain"], 19: ["🌧️", "Moderate rain"], 20: ["🌧️", "Heavy rain"], 21: ["⛈️", "Thunder"], 22: ["🌨️", "Light sleet"], 23: ["🌨️", "Moderate sleet"], 24: ["🌨️", "Heavy sleet"], 25: ["❄️", "Light snowfall"], 26: ["❄️", "Moderate snowfall"], 27: ["❄️", "Heavy snowfall"] };
+  const SYM = { 1: ["sun", "Clear sky"], 2: ["partly", "Nearly clear sky"], 3: ["partly", "Variable cloudiness"], 4: ["partly", "Half-clear sky"], 5: ["cloud", "Cloudy"], 6: ["cloud", "Overcast"], 7: ["fog", "Fog"], 8: ["showers", "Light rain showers"], 9: ["showers", "Moderate rain showers"], 10: ["rain", "Heavy rain showers"], 11: ["thunder", "Thunderstorm"], 12: ["sleet", "Light sleet showers"], 13: ["sleet", "Moderate sleet showers"], 14: ["sleet", "Heavy sleet showers"], 15: ["sleet", "Light snow showers"], 16: ["snow", "Moderate snow showers"], 17: ["snow", "Heavy snow showers"], 18: ["rain", "Light rain"], 19: ["rain", "Moderate rain"], 20: ["rain", "Heavy rain"], 21: ["thunder", "Thunder"], 22: ["sleet", "Light sleet"], 23: ["sleet", "Moderate sleet"], 24: ["sleet", "Heavy sleet"], 25: ["snow", "Light snowfall"], 26: ["snow", "Moderate snowfall"], 27: ["snow", "Heavy snowfall"] };
+  /* weather glyphs: 24px line icons, studio-hub style (stroke 1.5, round caps) */
+  const WX_PATH = {
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/>',
+    partly: '<path d="M8.5 3.5v1.3M3.9 5.4l.9.9M2.5 10h1.3M12.2 6.3l.9-.9"/><path d="M5.6 11.3a3.4 3.4 0 0 1 6.5-1.6"/><path d="M8 20h9.5a3.5 3.5 0 0 0 .4-7 5 5 0 0 0-9.6 1.2A2.9 2.9 0 0 0 8 20z"/>',
+    cloud: '<path d="M7 19h10.5a4 4 0 0 0 .5-8 6 6 0 0 0-11.5 1.6A3.2 3.2 0 0 0 7 19z"/>',
+    fog: '<path d="M7 13h10.5a3.5 3.5 0 0 0 .3-7 5.5 5.5 0 0 0-10.5 1.5A2.8 2.8 0 0 0 7 13z"/><path d="M4 16.5h16M6 20h12"/>',
+    showers: '<path d="M8.5 3.5v1.2M4.3 5.3l.8.8M3 9.5h1.2"/><path d="M5.8 10.6a3.2 3.2 0 0 1 5.9-1.4"/><path d="M8 16.5h9.5a3.3 3.3 0 0 0 .4-6.6 4.8 4.8 0 0 0-9.2 1.2A2.7 2.7 0 0 0 8 16.5z"/><path d="M10 19.5l-.8 1.6M14 19.5l-.8 1.6"/>',
+    rain: '<path d="M7 14.5h10.5a3.8 3.8 0 0 0 .4-7.6 5.8 5.8 0 0 0-11 1.5A3 3 0 0 0 7 14.5z"/><path d="M8.5 17.5l-1 2M12.5 17.5l-1 2M16.5 17.5l-1 2"/>',
+    thunder: '<path d="M7 14h10.5a3.8 3.8 0 0 0 .4-7.6 5.8 5.8 0 0 0-11 1.5A3 3 0 0 0 7 14z"/><path d="M12.5 14.5 10.5 18h3l-2 3.5"/>',
+    sleet: '<path d="M7 14h10.5a3.8 3.8 0 0 0 .4-7.6 5.8 5.8 0 0 0-11 1.5A3 3 0 0 0 7 14z"/><path d="M8.5 17l-.8 1.6M15.5 17l-.8 1.6"/><circle cx="12" cy="19" r=".6" fill="currentColor"/>',
+    snow: '<path d="M7 13.5h10.5a3.8 3.8 0 0 0 .4-7.6 5.8 5.8 0 0 0-11 1.5A3 3 0 0 0 7 13.5z"/><path d="M8.5 17.5v3M7.2 19h2.6M15.5 17.5v3M14.2 19h2.6M12 18.5v2"/>',
+  };
+  const wxIcon = (k) => (WX_PATH[k] ? `<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${WX_PATH[k]}</g></svg>` : "");
 
   function renderForecast() {
     const el = $("#c-fc"), strip = $("#d-fc");
@@ -243,7 +256,7 @@
       const noon = rs.reduce((a, b) => (Math.abs(sthHour(b.t) - 13) < Math.abs(sthHour(a.t) - 13) ? b : a));
       const s = SYM[noon.sym] || ["", ""];
       const lbl = k === today ? "Today" : wdDayFmt.format(new Date(k + "T12:00:00Z"));
-      return `<div class="day" title="${esc(s[1])}"><div class="dn">${esc(lbl)}</div><div class="di" aria-hidden="true">${s[0]}</div><div class="dt">${fmt(mx)}° <span>${fmt(mn)}°</span></div><div class="dp">${rn.length ? (sum >= 0.1 ? fmt(sum, 1) + " mm" : "dry") : "&nbsp;"}</div><span class="sr-only">${esc(s[1])}</span></div>`;
+      return `<div class="day" title="${esc(s[1])}"><div class="dn">${esc(lbl)}</div><div class="di" aria-hidden="true">${wxIcon(s[0])}</div><div class="dt">${fmt(mx)}° <span>${fmt(mn)}°</span></div><div class="dp">${rn.length ? (sum >= 0.1 ? fmt(sum, 1) + " mm" : "dry") : "&nbsp;"}</div><span class="sr-only">${esc(s[1])}</span></div>`;
     }).join("");
   }
 
@@ -518,7 +531,7 @@
     if (!lastTs && !failing.length) setStatus(el, "stale", "Loading live data…");
     else if (failing.length === keys.length) setStatus(el, "err", `Offline · no source could be loaded (${esc(names)}); retrying`);
     else if (failing.length) setStatus(el, "stale", `Partly live · updated ${fmtTime(lastTs)} · problem with ${esc(names)}`);
-    else setStatus(el, "ok", `Live · updated ${fmtTime(lastTs)}`);
+    else setStatus(el, "ok", `Updated ${fmtTime(lastTs)}`);
   }
   async function run(k) {
     const st = S[k]; if (st.busy) return; st.busy = true;

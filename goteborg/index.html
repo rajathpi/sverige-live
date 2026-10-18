@@ -3,18 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Göteborg live · Sverige Live</title>
+<title>Göteborg · Sverige Live</title>
 <meta name="description" content="Live weather, forecast, electricity price, the Swedish power mix and police events for Göteborg, fetched in your browser from open Swedish data sources.">
+<script>(function(){var t=null;try{t=new URLSearchParams(location.search).get("theme")||localStorage.getItem("hubTheme")}catch(e){}document.documentElement.dataset.theme=t==="dark"?"dark":"light"})()</script>
+<link rel="stylesheet" href="../assets/css/kit.css">
 <link rel="stylesheet" href="../assets/css/base.css">
+<script src="../assets/js/theme.js" defer></script>
 <link rel="stylesheet" href="goteborg.css">
 </head>
 <body>
-<header class="topbar"><div class="in"><a class="brand" href="../"><span class="flag" aria-hidden="true"></span>Sverige Live</a><nav class="nav" aria-label="Dashboards"><a href="../economy/">Economy pulse</a><a href="../goteborg/" aria-current="page">Göteborg live</a><a href="../kommuner/">Compare kommuner</a></nav><span class="sp"></span><button class="btn sm" data-theme-toggle>☾ Dark</button></div></header>
+<header class="topbar"><div class="in"><a class="brand" href="../">Sverige <span>Live</span></a><nav class="nav" aria-label="Dashboards"><a href="../economy/">Economy</a><a href="../goteborg/" aria-current="page">Göteborg</a><a href="../kommuner/">Kommuner</a></nav><span class="sp"></span><span data-hub-theme-slot></span></div></header>
 
 <main class="wrap">
   <section class="pagehead">
-    <h1>Göteborg live</h1>
-    <p>Weather, electricity and police events for Sweden's second city, fetched straight from the source every time you open this page and refreshed while it stays open.</p>
+    <h1>Göteborg <span>now</span></h1>
+    <p>Weather, electricity and police reports for Göteborg. Updates on its own while the page is open.</p>
     <div class="status stale" id="status" role="status"><span class="dot" aria-hidden="true"></span><span>Loading live data…</span></div>
   </section>
 
@@ -30,7 +33,7 @@
   <div class="grid rows">
     <section class="card span-8" aria-labelledby="h-fc">
       <h2 id="h-fc">Forecast, next 48 hours</h2>
-      <p class="sub">Temperature, precipitation and wind for central Göteborg, then the days after.</p>
+      <p class="sub">Temperature, rain and wind for central Göteborg.</p>
       <div class="legend" aria-hidden="true"><span><i style="background:var(--c2)"></i>Temperature °C</span><span><i style="background:var(--c1)"></i>Precipitation mm</span><span><i style="background:var(--c6)"></i>Wind m/s (shaded up to gusts)</span></div>
       <div class="chart" id="c-fc"><div class="loading">Loading forecast</div></div>
       <div class="daystrip" id="d-fc" aria-label="Daily forecast"></div>
@@ -38,15 +41,15 @@
     </section>
 
     <section class="card span-4" aria-labelledby="h-now">
-      <h2 id="h-now">Powering Sweden right now</h2>
-      <p class="sub">National production by source, from the grid operator's control room.</p>
+      <h2 id="h-now">Electricity production now</h2>
+      <p class="sub">Sweden, by source.</p>
       <div id="b-now"><div class="loading">Loading</div></div>
       <p class="src" id="src-now"></p>
     </section>
 
     <section class="card span-7" aria-labelledby="h-mix">
-      <h2 id="h-mix">Today's power mix, hour by hour</h2>
-      <p class="sub">Sweden-wide production stacked by source, with consumption as the dashed line.</p>
+      <h2 id="h-mix">Production today</h2>
+      <p class="sub">Sweden, by source. The dashed line is consumption.</p>
       <div class="legend" id="l-mix" aria-hidden="true"></div>
       <div class="chart" id="c-mix"><div class="loading">Loading</div></div>
       <p class="se3" id="se3"></p>

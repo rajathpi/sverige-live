@@ -28,7 +28,7 @@
       D = await SL.fetchJSON(`../data/economy.json?v=${bust}`);
       const age = (Date.now() - new Date(D.generated)) / 36e5;
       const errs = D.errors && D.errors.length ? ` · ${D.errors.length} source(s) failed last run` : "";
-      SL.setStatus(status, age > 30 ? "stale" : "ok", `Official figures · checked ${SL.timeAgo(D.generated)}${errs}`);
+      SL.setStatus(status, age > 30 ? "stale" : "ok", `Checked ${SL.timeAgo(D.generated)}${errs}`);
       render();
     } catch (e) {
       SL.setStatus(status, "err", "Could not load the data file: " + SL.esc(e.message));
@@ -59,7 +59,7 @@
     $("calendar").innerHTML = items.length ? items.map((it) => {
       const n = daysUntil(it.date);
       const when = n <= 0 ? "today" : n === 1 ? "tomorrow" : `in ${n} days`;
-      return `<li class="${n <= 7 ? "soon" : ""}"><span class="when">${it.expected ? "≈ " : ""}${SL.fmtDate(it.date)}</span><span class="what">${SL.esc(it.what)}</span><span class="in">${when} · ${it.expected ? "expected" : "confirmed"}</span></li>`;
+      return `<li class="${n <= 7 ? "soon" : ""}"><span class="when">${it.expected ? "≈ " : ""}${SL.fmtDate(it.date)}</span><span class="what">${SL.esc(it.what)}</span><span class="in">${when}${it.expected ? " · estimate" : ""}</span></li>`;
     }).join("") : '<li class="empty">No upcoming dates found.</li>';
   }
 

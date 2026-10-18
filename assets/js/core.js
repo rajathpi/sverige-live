@@ -3,26 +3,13 @@
 (function () {
   "use strict";
   const root = document.documentElement;
-  const KEY = "sverige-live-theme";
 
-  /* ---------- theme: light / dark / follow the OS ---------- */
-  try { const t = localStorage.getItem(KEY); if (t) root.setAttribute("data-theme", t); } catch (e) { /* storage blocked */ }
-  const isDark = () => root.getAttribute("data-theme") === "dark" || (!root.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
+  /* ---------- theme: the studio-hub slider (assets/js/theme.js) owns it ---------- */
+  const isDark = () => root.dataset.theme === "dark";
   const themeListeners = [];
-  function wireTheme() {
-    const btn = document.querySelector("[data-theme-toggle]");
-    if (!btn) return;
-    const label = () => (btn.textContent = isDark() ? "☀ Light" : "☾ Dark");
-    label();
-    btn.addEventListener("click", () => {
-      const next = isDark() ? "light" : "dark";
-      root.setAttribute("data-theme", next);
-      try { localStorage.setItem(KEY, next); } catch (e) { /* ignore */ }
-      label();
-      themeListeners.forEach((f) => f());
-    });
-    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { label(); themeListeners.forEach((f) => f()); });
-  }
+  const fire = () => themeListeners.forEach((f) => f());
+  addEventListener("hubthemechange", fire);
+  addEventListener("storage", (e) => { if (e.key === "hubTheme") setTimeout(fire, 0); });
   const onTheme = (f) => themeListeners.push(f);
   const css = (name) => getComputedStyle(root).getPropertyValue(name).trim();
 
@@ -94,5 +81,4 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   window.SL = { fetchJSON, fmt, pct, signed, fmtDate, fmtTime, timeAgo, tip, hideTip, setStatus, onResize, onTheme, css, isDark, esc };
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wireTheme); else wireTheme();
 })();

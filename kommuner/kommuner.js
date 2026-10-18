@@ -227,7 +227,7 @@
   const M = { w: 0, h: 0, built: false, svg: null, g: null, kp: null, gs: null, proj: null, zoom: null, k: 1, sc: null };
 
   function colors() {
-    const dark = SL.isDark(), acc = SL.css("--accent"), sur = SL.css("--surface");
+    const dark = SL.isDark(), acc = SL.css("--h-blue"), sur = SL.css("--surface");
     const lo = d3.interpolateLab(sur, acc)(dark ? 0.2 : 0.13);
     const hi = dark ? d3.color(acc).brighter(0.7) : d3.color(acc).darker(1.1);
     return d3.quantize(d3.interpolateLab(lo, hi.formatHex ? hi.formatHex() : hi), NCLASS);
@@ -299,7 +299,7 @@
     // legend
     const b = sc.breaks, dec = kdef.get(state.kpi).dec;
     $("#mapLegend").innerHTML = `<div class="bar">${sc.cols.map((c) => `<i style="background:${c}"></i>`).join("")}</div><div class="ticks">${b.map((x, i) => `<span class="${i === 0 ? "first" : i === b.length - 1 ? "last" : ""}" style="left:${((i / NCLASS) * 100).toFixed(2)}%">${fc(x, dec)}</span>`).join("")}</div>` +
-      `<div class="note"><span>Darker = higher value${state.scale === "q" ? " · each class holds about the same number of kommuner" : " · classes span equal value ranges"}</span>${d.n < geo.ids.length ? `<span><i class="nd"></i>no data (${geo.ids.length - d.n})</span>` : ""}</div>`;
+      `<div class="note"><span>${SL.isDark() ? "Lighter" : "Darker"} = higher value${state.scale === "q" ? " · each class holds about the same number of kommuner" : " · classes span equal value ranges"}</span>${d.n < geo.ids.length ? `<span><i class="nd"></i>no data (${geo.ids.length - d.n})</span>` : ""}</div>`;
   }
   function setupZoomButtons() {
     const by = (f) => () => M.svg && M.svg.transition().duration(220).call(M.zoom.scaleBy, f);

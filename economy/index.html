@@ -3,26 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Economy Pulse · Sverige Live</title>
-<meta name="description" content="Sweden's economy at a glance: inflation, the Riksbank policy rate, unemployment, house prices and confidence, updated automatically when SCB, Riksbanken and Konjunkturinstitutet publish.">
+<title>Economy · Sverige Live</title>
+<meta name="description" content="Inflation, the policy rate, unemployment, house prices and confidence in Sweden, from SCB, the Riksbank and Konjunkturinstitutet.">
+<script>(function(){var t=null;try{t=new URLSearchParams(location.search).get("theme")||localStorage.getItem("hubTheme")}catch(e){}document.documentElement.dataset.theme=t==="dark"?"dark":"light"})()</script>
+<link rel="stylesheet" href="../assets/css/kit.css">
 <link rel="stylesheet" href="../assets/css/base.css">
+<script src="../assets/js/theme.js" defer></script>
 <link rel="stylesheet" href="economy.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" defer></script>
 <script src="../assets/js/core.js" defer></script>
 <script src="economy.js" defer></script>
 </head>
 <body>
-<header class="topbar"><div class="in"><a class="brand" href="../"><span class="flag" aria-hidden="true"></span>Sverige Live</a><nav class="nav" aria-label="Dashboards"><a href="../economy/" aria-current="page">Economy pulse</a><a href="../goteborg/">Göteborg live</a><a href="../kommuner/">Compare kommuner</a></nav><span class="sp"></span><button class="btn sm" data-theme-toggle>☾ Dark</button></div></header>
+<header class="topbar"><div class="in"><a class="brand" href="../">Sverige <span>Live</span></a><nav class="nav" aria-label="Dashboards"><a href="../economy/" aria-current="page">Economy</a><a href="../goteborg/">Göteborg</a><a href="../kommuner/">Kommuner</a></nav><span class="sp"></span><span data-hub-theme-slot></span></div></header>
 
 <main class="wrap">
   <section class="pagehead">
-    <h1>Sweden's economy pulse</h1>
-    <p>Inflation, interest rates, jobs, house prices and confidence, straight from Statistics Sweden, the Riksbank and Konjunkturinstitutet. A scheduled job fetches the official figures every weekday and this page updates on its own when a new number is published.</p>
+    <h1>Economy <span>Sweden</span></h1>
+    <p>Inflation, interest rates, jobs, house prices and confidence. Data from SCB, the Riksbank and Konjunkturinstitutet, checked every weekday.</p>
     <div class="status" id="status"><span class="dot"></span><span>Loading the latest figures…</span></div>
   </section>
 
   <section class="card calendar" aria-labelledby="cal-h">
-    <div class="cal-head"><h2 id="cal-h">Coming up</h2><span class="sub">next releases · <span class="pill accent">confirmed</span> from the Riksbank calendar, <span class="pill">≈ expected</span> from each agency's regular rhythm</span></div>
+    <div class="cal-head"><h2 id="cal-h">Next releases</h2><span class="sub">Riksbank dates are confirmed. Dates marked ≈ are estimates from each agency's usual schedule.</span></div>
     <ol class="cal" id="calendar"><li class="loading">Loading</li></ol>
   </section>
 
@@ -52,14 +55,14 @@
     </article>
 
     <article class="card span-7">
-      <div class="chead"><div><h2>Mood: businesses and households</h2><p class="sub" id="mood-sub"></p></div></div>
+      <div class="chead"><div><h2>Business and consumer confidence</h2><p class="sub" id="mood-sub"></p></div></div>
       <div class="legend" id="mood-legend"></div>
       <div class="chart" id="mood-chart" style="height:260px"></div>
       <p class="src">Konjunkturinstitutet, Economic Tendency Survey (100 = historical average)</p>
     </article>
 
     <article class="card span-5">
-      <div class="chead"><div><h2>The krona</h2><p class="sub" id="fx-sub"></p></div></div>
+      <div class="chead"><div><h2>EUR/SEK</h2><p class="sub" id="fx-sub"></p></div></div>
       <div class="chart" id="fx-chart" style="height:260px"></div>
       <p class="src">Sveriges Riksbank, EUR/SEK daily fixing</p>
     </article>

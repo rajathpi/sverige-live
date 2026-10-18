@@ -3,18 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Compare kommuner · Sverige Live</title>
+<title>Kommuner · Sverige Live</title>
 <meta name="description" content="Compare Sweden's 290 municipalities on 16 indicators: live choropleth map, rankings, trends and a side-by-side profile, fetched from Kolada's open API.">
+<script>(function(){var t=null;try{t=new URLSearchParams(location.search).get("theme")||localStorage.getItem("hubTheme")}catch(e){}document.documentElement.dataset.theme=t==="dark"?"dark":"light"})()</script>
+<link rel="stylesheet" href="../assets/css/kit.css">
 <link rel="stylesheet" href="../assets/css/base.css">
+<script src="../assets/js/theme.js" defer></script>
 <link rel="stylesheet" href="kommuner.css">
 </head>
 <body>
-<header class="topbar"><div class="in"><a class="brand" href="../"><span class="flag" aria-hidden="true"></span>Sverige Live</a><nav class="nav" aria-label="Dashboards"><a href="../economy/">Economy pulse</a><a href="../goteborg/">Göteborg live</a><a href="../kommuner/" aria-current="page">Compare kommuner</a></nav><span class="sp"></span><button class="btn sm" data-theme-toggle>☾ Dark</button></div></header>
+<header class="topbar"><div class="in"><a class="brand" href="../">Sverige <span>Live</span></a><nav class="nav" aria-label="Dashboards"><a href="../economy/">Economy</a><a href="../goteborg/">Göteborg</a><a href="../kommuner/" aria-current="page">Kommuner</a></nav><span class="sp"></span><span data-hub-theme-slot></span></div></header>
 
 <main class="wrap">
   <section class="pagehead">
-    <h1>Compare kommuner</h1>
-    <p>How do Sweden's 290 municipalities stack up? Pick an indicator to colour the map, then click up to five kommuner to line them up against each other and against Riket (the national figure). Everything is fetched live from Kolada, so new figures appear as soon as they are published.</p>
+    <h1>Kommuner <span>compared</span></h1>
+    <p>All 290 municipalities on one map. Pick an indicator, then click up to five kommuner to compare them with each other and with the national figure (Riket). Data from Kolada.</p>
     <div class="status" id="status" role="status"><span class="dot" aria-hidden="true"></span><span>Connecting to Kolada…</span></div>
   </section>
 
@@ -76,7 +79,7 @@
     </section>
 
     <section class="card span-12">
-      <h2>Profile: every indicator side by side</h2>
+      <h2>All indicators</h2>
       <p class="sub" id="profSub">Each kommun's latest value and rank on all 16 indicators.</p>
       <div class="plegend"><span><i class="sw good"></i>better than most kommuner</span><span><i class="sw bad"></i>worse than most</span><span><i class="sw neutral"></i>no good/bad direction (rank 1 = highest value)</span></div>
       <div class="twrap" id="profile"><div class="loading">Loading…</div></div>
