@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compare kommuner · Sverige Live</title>
+<meta name="description" content="Compare Sweden's 290 municipalities on 16 indicators: live choropleth map, rankings, trends and a side-by-side profile, fetched from Kolada's open API.">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="kommuner.css">
+</head>
+<body>
+<header class="topbar"><div class="in"><a class="brand" href="../"><span class="flag" aria-hidden="true"></span>Sverige Live</a><nav class="nav" aria-label="Dashboards"><a href="../economy/">Economy pulse</a><a href="../goteborg/">Göteborg live</a><a href="../kommuner/" aria-current="page">Compare kommuner</a></nav><span class="sp"></span><button class="btn sm" data-theme-toggle>☾ Dark</button></div></header>
+
+<main class="wrap">
+  <section class="pagehead">
+    <h1>Compare kommuner</h1>
+    <p>How do Sweden's 290 municipalities stack up? Pick an indicator to colour the map, then click up to five kommuner to line them up against each other and against Riket (the national figure). Everything is fetched live from Kolada, so new figures appear as soon as they are published.</p>
+    <div class="status" id="status" role="status"><span class="dot" aria-hidden="true"></span><span>Connecting to Kolada…</span></div>
+  </section>
+
+  <div class="grid">
+    <section class="card span-12 controls" aria-label="Indicator">
+      <div class="crow">
+        <label class="fld grow"><span>Indicator</span><select id="kpiSel"></select></label>
+        <label class="fld"><span>Year</span><select id="yearSel"></select></label>
+        <div class="fld"><span>Colour classes</span>
+          <div class="seg" id="scaleSeg" role="group" aria-label="Colour classes"><button type="button" data-s="q" class="on">Quantiles</button><button type="button" data-s="e">Equal steps</button></div>
+        </div>
+      </div>
+      <div class="kinfo" id="kpiInfo"></div>
+    </section>
+
+    <section class="card span-7">
+      <h2 id="mapTitle">Map of all kommuner</h2>
+      <p class="sub" id="mapSub">Click a kommun to add or remove it from the comparison. Ctrl + scroll or the buttons zoom.</p>
+      <div class="mapbox">
+        <div id="map" class="kmap" aria-label="Choropleth map of Swedish municipalities"><div class="loading">Loading map…</div></div>
+        <div class="zbtns"><button class="btn sm" id="zin" aria-label="Zoom in">+</button><button class="btn sm" id="zout" aria-label="Zoom out">−</button><button class="btn sm" id="zreset" aria-label="Reset zoom">⌂</button></div>
+      </div>
+      <div class="klegend" id="mapLegend"></div>
+      <p class="src">Borders: <a href="https://github.com/okfse/sweden-geojson">okfse/sweden-geojson</a>, derived from Valmyndigheten. Values: <a href="https://www.kolada.se">Kolada</a>.</p>
+    </section>
+
+    <div class="span-5 col">
+      <section class="card" aria-label="Selected kommuner">
+        <h2>Compared kommuner</h2>
+        <p class="sub">Up to 5. Click the map, a bar or a list entry, or search by name.</p>
+        <div class="search">
+          <input type="search" id="q" placeholder="Search a kommun…" autocomplete="off" aria-label="Search a kommun" role="combobox" aria-expanded="false" aria-controls="sug" aria-autocomplete="list">
+          <ul id="sug" class="sug" role="listbox" hidden></ul>
+        </div>
+        <div class="chips" id="chips"></div>
+        <div class="hint" id="hint" aria-live="polite"></div>
+        <div class="actions"><button class="btn sm" id="copyLink" type="button">Copy link to this view</button><button class="btn sm" id="resetSel" type="button">Reset selection</button></div>
+      </section>
+
+      <section class="card grow" aria-label="Top and bottom 10">
+        <h2 id="listTitle">Top and bottom 10</h2>
+        <p class="sub" id="listSub"></p>
+        <div class="lists" id="lists"><div class="loading">Loading…</div></div>
+      </section>
+    </div>
+
+    <section class="card span-7">
+      <h2>All kommuner, ranked</h2>
+      <p class="sub" id="stripSub">Each bar is one kommun; the selected ones are labelled.</p>
+      <div class="chart" id="strip"><div class="loading">Loading…</div></div>
+    </section>
+
+    <section class="card span-5">
+      <h2>Trend</h2>
+      <p class="sub" id="trendSub">The chosen indicator over the years, selected kommuner against Riket.</p>
+      <div class="seg" id="trendSeg" role="group" aria-label="Trend scale"><button type="button" data-m="val" class="on">Values</button><button type="button" data-m="idx">Index (first year = 100)</button></div>
+      <div class="legend" id="trendLegend"></div>
+      <div class="chart" id="trend"><div class="loading">Loading…</div></div>
+    </section>
+
+    <section class="card span-12">
+      <h2>Profile: every indicator side by side</h2>
+      <p class="sub" id="profSub">Each kommun's latest value and rank on all 16 indicators.</p>
+      <div class="plegend"><span><i class="sw good"></i>better than most kommuner</span><span><i class="sw bad"></i>worse than most</span><span><i class="sw neutral"></i>no good/bad direction (rank 1 = highest value)</span></div>
+      <div class="twrap" id="profile"><div class="loading">Loading…</div></div>
+      <p class="src">Colour shows the share of kommuner a kommun beats, using each indicator's own latest year. Click an indicator name to put it on the map. Data: <a href="https://www.kolada.se">Kolada</a> (RKA).</p>
+    </section>
+  </div>
+
+  <footer class="footer">
+    <span>Data: <a href="https://www.kolada.se">Kolada (RKA), open data</a> · <a href="https://api.kolada.se/v3/">API</a> · municipality borders <a href="https://github.com/okfse/sweden-geojson">okfse/sweden-geojson</a>, derived from Valmyndigheten</span>
+    <span>Code: MIT · <a href="https://github.com/rajathpi/sverige-live">github.com/rajathpi/sverige-live</a></span>
+  </footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="../assets/js/core.js"></script>
+<script src="kpis.js"></script>
+<script src="kommuner.js"></script>
+</body>
+</html>

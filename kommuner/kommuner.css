@@ -1,0 +1,107 @@
+/* Page-specific styles for Compare kommuner. Tokens and components come from ../assets/css/base.css. */
+.col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.col .grow { flex: 1; }
+
+/* controls */
+.controls .crow { display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: flex-end; }
+.fld { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fld > span { font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: .02em; }
+.fld.grow { flex: 1 1 320px; }
+.fld select { width: 100%; max-width: 100%; }
+.kinfo { margin-top: 12px; font-size: 13.5px; color: var(--muted); }
+.kinfo .t { color: var(--text); font-weight: 650; }
+.kinfo .t em { font-style: normal; color: var(--muted); font-weight: 500; }
+.kinfo p { margin: 4px 0 0; max-width: 90ch; }
+.kinfo .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
+/* map */
+.mapbox { position: relative; }
+.kmap { height: 620px; position: relative; }
+.kmap svg { display: block; width: 100%; height: 100%; overflow: hidden; cursor: grab; touch-action: pan-y; }
+.kmap svg:active { cursor: grabbing; }
+.kmap path.k { stroke: var(--surface); stroke-width: .5px; vector-effect: non-scaling-stroke; cursor: pointer; transition: fill .2s; }
+.kmap path.k:hover { stroke: var(--text); stroke-width: 1.5px; }
+.kmap path.sel { fill: none; stroke-width: 2.2px; vector-effect: non-scaling-stroke; pointer-events: none; }
+.kmap circle.ring { fill: none; stroke-width: 2px; vector-effect: non-scaling-stroke; pointer-events: none; }
+.kmap text.mlab { fill: var(--text); font-weight: 650; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+.zbtns { position: absolute; top: 6px; right: 0; display: flex; flex-direction: column; gap: 4px; }
+.zbtns .btn { width: 30px; padding: 6px 0; text-align: center; }
+.klegend { margin-top: 10px; }
+.klegend .bar { display: flex; height: 12px; border-radius: 3px; overflow: hidden; }
+.klegend .bar i { flex: 1; }
+.klegend .ticks { position: relative; height: 16px; margin-top: 3px; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.klegend .ticks span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
+.klegend .ticks span.first { transform: none; }
+.klegend .ticks span.last { transform: translateX(-100%); }
+.klegend .note { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--faint); margin-top: 4px; }
+.klegend .nd { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--border); margin-right: 5px; vertical-align: -1px; }
+
+/* selection */
+.search { position: relative; }
+.search input { width: 100%; }
+.sug { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px); margin: 0; padding: 4px; list-style: none; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 10px; box-shadow: var(--shadow); max-height: 280px; overflow: auto; }
+.sug li { padding: 7px 9px; border-radius: 7px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; }
+.sug li small { color: var(--faint); font-size: 12px; }
+.sug li[aria-selected="true"], .sug li:hover { background: var(--accent-soft); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; min-height: 32px; }
+.chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 6px 5px 10px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface-2); font-size: 13.5px; font-weight: 600; }
+.chip .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--sc); flex: none; }
+.chip button { all: unset; cursor: pointer; width: 20px; height: 20px; line-height: 19px; text-align: center; border-radius: 50%; color: var(--muted); font-size: 15px; }
+.chip button:hover, .chip button:focus-visible { background: var(--border); color: var(--text); }
+.chips .none { color: var(--faint); font-size: 13.5px; align-self: center; }
+.hint { min-height: 18px; font-size: 12.5px; color: var(--warn); margin-top: 6px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+/* top / bottom lists */
+.lists { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 1000px) and (min-width: 561px) { .lists { gap: 24px; } }
+@media (max-width: 560px) { .lists { grid-template-columns: 1fr; } }
+.lists h3 { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 6px; }
+.lists ol { list-style: none; margin: 0; padding: 0; }
+.lists li button { all: unset; box-sizing: border-box; width: 100%; display: grid; grid-template-columns: 30px 1fr auto; gap: 6px; align-items: center; padding: 4px 6px 4px 8px; border-radius: 7px; cursor: pointer; font-size: 13.5px; border-left: 3px solid transparent; position: relative; }
+.lists li button:hover, .lists li button:focus-visible { background: var(--surface-2); }
+.lists li button.on { border-left-color: var(--sc); background: var(--accent-soft); }
+.lists .rk { color: var(--faint); font-variant-numeric: tabular-nums; font-size: 12px; }
+.lists .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lists .vl { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* strip and trend */
+.chart svg .hov { pointer-events: none; }
+.chart .nodata { color: var(--faint); font-size: 14px; padding: 30px 0; text-align: center; }
+.legend .sw { display: inline-block; width: 14px; height: 0; border-top: 3px solid var(--sc); margin-right: 6px; vertical-align: 3px; border-radius: 2px; }
+.legend .sw.dash { border-top-style: dashed; }
+
+/* profile table */
+.plegend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
+.plegend .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -2px; }
+.plegend .sw.good { background: color-mix(in srgb, var(--good) 45%, transparent); }
+.plegend .sw.bad { background: color-mix(in srgb, var(--bad) 45%, transparent); }
+.plegend .sw.neutral { background: var(--surface-2); border: 1px solid var(--border); }
+.twrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+table.prof { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 640px; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+table.prof th, table.prof td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; }
+table.prof th:first-child, table.prof td:first-child { text-align: left; position: sticky; left: 0; background: var(--surface); z-index: 1; min-width: 230px; max-width: 280px; white-space: normal; }
+table.prof thead th { font-size: 12.5px; color: var(--muted); position: sticky; top: 0; background: var(--surface-2); z-index: 2; }
+table.prof thead th:first-child { z-index: 3; background: var(--surface-2); }
+table.prof thead th .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--sc); margin-right: 5px; }
+table.prof tr.cat td { background: var(--surface-2); color: var(--muted); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; text-align: left; padding: 5px 10px; }
+table.prof tr.cat td:first-child { z-index: 1; }
+table.prof tbody tr:last-child td { border-bottom: 0; }
+table.prof .kb { all: unset; cursor: pointer; font-weight: 600; color: var(--text); }
+table.prof .kb:hover, table.prof .kb:focus-visible { color: var(--accent); text-decoration: underline; }
+table.prof tr.cur td:first-child .kb { color: var(--accent); }
+table.prof tr.cur td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+table.prof td small { color: var(--faint); margin-left: 4px; font-size: 11.5px; }
+table.prof td.yr { color: var(--faint); font-size: 12px; }
+table.prof td.rk { color: var(--muted); }
+table.prof td .u { color: var(--faint); font-size: 11.5px; font-weight: 400; }
+
+@media (max-width: 1000px) { .kmap { height: 560px; } }
+@media (max-width: 560px) {
+  .kmap { height: 500px; }
+  .controls .crow { gap: 12px; }
+  .fld { width: 100%; }
+  .fld.grow { flex-basis: 100%; }
+  table.prof th:first-child, table.prof td:first-child { min-width: 170px; }
+}
+.seg#trendSeg{margin:2px 0 8px} @media (max-width:560px){.seg#trendSeg button{font-size:12px;padding:7px 8px}}

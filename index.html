@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sverige Live</title>
+<meta name="description" content="Three live dashboards built on Swedish official open data: the economy, Göteborg right now, and every municipality compared.">
+<link rel="stylesheet" href="assets/css/base.css">
+<style>
+.hero { padding: 48px 0 26px; max-width: 760px; }
+.hero h1 { font-size: clamp(32px, 5vw, 50px); line-height: 1.05; letter-spacing: -.025em; margin: 0 0 12px; }
+.hero p { font-size: 18px; color: var(--muted); margin: 0; }
+.boards { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 920px) { .boards { grid-template-columns: 1fr; } }
+.board { display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: inherit; transition: transform .15s, border-color .15s; }
+.board:hover { transform: translateY(-2px); border-color: var(--accent); }
+.board .eyebrow { font: 650 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.board h2 { font-size: 22px; margin: 0; }
+.board p { margin: 0; color: var(--muted); font-size: 14.5px; }
+.board .live { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.board .live div { display: grid; }
+.board .live b { font-size: 22px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.board .live span { font-size: 12.5px; color: var(--muted); }
+.board .go { font-weight: 650; color: var(--accent); font-size: 14px; }
+.how { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 28px; }
+@media (max-width: 920px) { .how { grid-template-columns: 1fr; } }
+.how h3 { margin: 0 0 6px; font-size: 15.5px; }
+.how p { margin: 0; color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="in"><a class="brand" href="./"><span class="flag" aria-hidden="true"></span>Sverige Live</a><nav class="nav" aria-label="Dashboards"><a href="economy/">Economy pulse</a><a href="goteborg/">Göteborg live</a><a href="kommuner/">Compare kommuner</a></nav><span class="sp"></span><button class="btn sm" data-theme-toggle>☾ Dark</button></div></header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>Sweden, live, from the source</h1>
+    <p>Three dashboards built only on official Swedish open data. Nothing here is typed in by hand: each page fetches the numbers from the agencies that publish them, so it is always as current as they are.</p>
+  </section>
+
+  <section class="boards">
+    <a class="card board" href="economy/">
+      <span class="eyebrow">SCB · Riksbanken · Konjunkturinstitutet</span>
+      <h2>Economy pulse</h2>
+      <p>Inflation against the policy rate, unemployment, house prices and confidence, with the dates of the next releases.</p>
+      <div class="live"><div><b id="e1">–</b><span>inflation (CPIF)</span></div><div><b id="e2">–</b><span>policy rate</span></div></div>
+      <span class="go">Open the dashboard →</span>
+    </a>
+    <a class="card board" href="goteborg/">
+      <span class="eyebrow">SMHI · Svenska kraftnät · Polisen</span>
+      <h2>Göteborg live</h2>
+      <p>The weather now and ahead, what is powering Sweden this hour, the electricity price and the latest police reports.</p>
+      <div class="live"><div><b id="g1">–</b><span>Göteborg now</span></div><div><b id="g2">–</b><span>Sweden producing</span></div></div>
+      <span class="go">Open the dashboard →</span>
+    </a>
+    <a class="card board" href="kommuner/">
+      <span class="eyebrow">Kolada (RKA)</span>
+      <h2>Compare kommuner</h2>
+      <p>All 290 municipalities on a map: taxes, schools, elder care, health, jobs and safety. Pick a few and compare them side by side.</p>
+      <div class="live"><div><b>290</b><span>municipalities</span></div><div><b id="k1">–</b><span>municipal tax, Göteborg</span></div></div>
+      <span class="go">Open the dashboard →</span>
+    </a>
+  </section>
+
+  <section class="how">
+    <div class="card"><h3>Live where the source allows it</h3><p>SMHI, Svenska kraftnät, Polisen and Kolada answer straight to your browser, so those pages fetch fresh data every time they open and keep refreshing while they stay open.</p></div>
+    <div class="card"><h3>Updated on release days</h3><p>The Riksbank and Konjunkturinstitutet cannot be called from a web page, so a GitHub Action fetches the economy figures three times every weekday and commits them only when a number has changed.</p></div>
+    <div class="card"><h3>Open and reusable</h3><p>The code is MIT licensed, and every chart names its source. No tracking, no keys, no build step: plain HTML, CSS and JavaScript on GitHub Pages. <a href="https://github.com/rajathpi/sverige-live">See the code</a>.</p></div>
+  </section>
+
+  <footer class="footer">
+    <span>Data: SCB, Sveriges Riksbank, Konjunkturinstitutet, SMHI, Svenska kraftnät, Polisen, Kolada. See each page for details and licences.</span>
+    <span>Code: MIT · <a href="https://github.com/rajathpi/sverige-live">github.com/rajathpi/sverige-live</a></span>
+  </footer>
+</main>
+<script src="assets/js/core.js"></script>
+<script>
+(async function () {
+  const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+  try {
+    const d = await SL.fetchJSON("data/economy.json?v=" + Math.floor(Date.now() / 600000));
+    const c = d.series.cpif.points, p = d.series.policy.latest;
+    set("e1", SL.fmt(c[c.length - 1][1], 1) + " %"); set("e2", SL.fmt(p[1], 2) + " %");
+  } catch (e) { /* the cards still link through */ }
+  try {
+    const t = await SL.fetchJSON("https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/1/station/71420/period/latest-hour/data.json", { cacheMinutes: 10 });
+    set("g1", SL.fmt(+t.value[t.value.length - 1].value, 1) + " °C");
+  } catch (e) { /* ignore */ }
+  try {
+    const day = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm" }).format(new Date());
+    const pr = await SL.fetchJSON(`https://www.svk.se/services/controlroom/v2/production?date=${day}&countryCode=SE`, { cacheMinutes: 10 });
+    const tot = (pr.Data || []).find((s) => String(s.id ?? s.name) === "1");
+    if (tot && tot.data.length) set("g2", SL.fmt(tot.data[tot.data.length - 1].y / 1000, 1) + " GW");
+  } catch (e) { /* ignore */ }
+  try {
+    const k = await SL.fetchJSON("https://api.kolada.se/v3/data/kpi/N00901/municipality/1480/year/" + [0, 1, 2].map((i) => new Date().getFullYear() + 1 - i).join(","), { cacheMinutes: 60 });
+    const v = k.values.sort((a, b) => b.period - a.period)[0];
+    if (v) set("k1", SL.fmt(v.values.find((x) => x.gender === "T").value, 2) + " %");
+  } catch (e) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

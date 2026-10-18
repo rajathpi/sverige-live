@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Göteborg live · Sverige Live</title>
+<meta name="description" content="Live weather, forecast, electricity price, the Swedish power mix and police events for Göteborg, fetched in your browser from open Swedish data sources.">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="goteborg.css">
+</head>
+<body>
+<header class="topbar"><div class="in"><a class="brand" href="../"><span class="flag" aria-hidden="true"></span>Sverige Live</a><nav class="nav" aria-label="Dashboards"><a href="../economy/">Economy pulse</a><a href="../goteborg/" aria-current="page">Göteborg live</a><a href="../kommuner/">Compare kommuner</a></nav><span class="sp"></span><button class="btn sm" data-theme-toggle>☾ Dark</button></div></header>
+
+<main class="wrap">
+  <section class="pagehead">
+    <h1>Göteborg live</h1>
+    <p>Weather, electricity and police events for Sweden's second city, fetched straight from the source every time you open this page and refreshed while it stays open.</p>
+    <div class="status stale" id="status" role="status"><span class="dot" aria-hidden="true"></span><span>Loading live data…</span></div>
+  </section>
+
+  <section class="kpis" aria-label="Right now">
+    <article class="card kpi" id="k-temp"><div class="loading">Loading</div></article>
+    <article class="card kpi" id="k-wind"><div class="loading">Loading</div></article>
+    <article class="card kpi" id="k-rain"><div class="loading">Loading</div></article>
+    <article class="card kpi" id="k-price"><div class="loading">Loading</div></article>
+    <article class="card kpi" id="k-power"><div class="loading">Loading</div></article>
+    <article class="card kpi" id="k-police"><div class="loading">Loading</div></article>
+  </section>
+
+  <div class="grid rows">
+    <section class="card span-8" aria-labelledby="h-fc">
+      <h2 id="h-fc">Forecast, next 48 hours</h2>
+      <p class="sub">Temperature, precipitation and wind for central Göteborg, then the days after.</p>
+      <div class="legend" aria-hidden="true"><span><i style="background:var(--c2)"></i>Temperature °C</span><span><i style="background:var(--c1)"></i>Precipitation mm</span><span><i style="background:var(--c6)"></i>Wind m/s (shaded up to gusts)</span></div>
+      <div class="chart" id="c-fc"><div class="loading">Loading forecast</div></div>
+      <div class="daystrip" id="d-fc" aria-label="Daily forecast"></div>
+      <p class="src" id="src-fc"></p>
+    </section>
+
+    <section class="card span-4" aria-labelledby="h-now">
+      <h2 id="h-now">Powering Sweden right now</h2>
+      <p class="sub">National production by source, from the grid operator's control room.</p>
+      <div id="b-now"><div class="loading">Loading</div></div>
+      <p class="src" id="src-now"></p>
+    </section>
+
+    <section class="card span-7" aria-labelledby="h-mix">
+      <h2 id="h-mix">Today's power mix, hour by hour</h2>
+      <p class="sub">Sweden-wide production stacked by source, with consumption as the dashed line.</p>
+      <div class="legend" id="l-mix" aria-hidden="true"></div>
+      <div class="chart" id="c-mix"><div class="loading">Loading</div></div>
+      <p class="se3" id="se3"></p>
+      <p class="src" id="src-mix"></p>
+    </section>
+
+    <section class="card span-5" aria-labelledby="h-price">
+      <div class="chead">
+        <div><h2 id="h-price">Electricity price, SE3</h2><p class="sub">Spot price in öre per kWh for Göteborg's bidding area.</p></div>
+        <div class="seg" role="group" aria-label="Choose day"><button type="button" class="on" data-day="today" aria-pressed="true">Today</button><button type="button" data-day="tomorrow" aria-pressed="false" hidden>Tomorrow</button></div>
+      </div>
+      <div class="chart" id="c-price"><div class="loading">Loading</div></div>
+      <div class="chips" id="chips-price"></div>
+      <p class="src" id="src-price"></p>
+    </section>
+
+    <section class="card span-7" aria-labelledby="h-feed">
+      <div class="chead">
+        <div><h2 id="h-feed">Police events</h2><p class="sub" id="sub-feed">Latest reports from Polisen.</p></div>
+        <div class="seg" role="group" aria-label="Area"><button type="button" class="on" data-area="gbg" aria-pressed="true">Göteborg</button><button type="button" data-area="vg" aria-pressed="false">+ Västra Götaland</button></div>
+      </div>
+      <ul class="feed" id="feed" tabindex="0" aria-label="Police events, newest first"><li class="loading">Loading</li></ul>
+      <p class="src" id="src-feed"></p>
+    </section>
+
+    <section class="card span-5" aria-labelledby="h-types">
+      <div class="chead">
+        <div><h2 id="h-types">Events by type</h2><p class="sub" id="sub-types">Count of reported events.</p></div>
+        <div class="seg" role="group" aria-label="Time window"><button type="button" data-win="24" aria-pressed="false">24 h</button><button type="button" class="on" data-win="168" aria-pressed="true">7 days</button></div>
+      </div>
+      <div class="chart" id="c-types"><div class="loading">Loading</div></div>
+      <p class="note">Police positions are approximate: Polisen publishes one county-wide coordinate for every event, so no map is drawn here. Counts use the time each report was published.</p>
+    </section>
+  </div>
+
+  <footer class="footer">
+    <div>Data, fetched live in your browser:
+      <a href="https://opendata.smhi.se/" rel="noopener">SMHI Open Data</a> (observations and forecast, CC BY 4.0) ·
+      <a href="https://www.svk.se/om-kraftsystemet/kontrollrummet/" rel="noopener">Svenska kraftnät</a> control room ·
+      <a href="https://polisen.se/aktuellt/polisens-api/" rel="noopener">Polisen</a> events API ·
+      <a href="https://www.elprisetjustnu.se/" rel="noopener">elprisetjustnu.se</a> (community service built on Nord Pool data, not an official source).
+    </div>
+    <div>Code: MIT · <a href="https://github.com/rajathpi/sverige-live" rel="noopener">github.com/rajathpi/sverige-live</a></div>
+  </footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="../assets/js/core.js"></script>
+<script src="goteborg.js"></script>
+</body>
+</html>

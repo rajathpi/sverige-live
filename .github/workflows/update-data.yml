@@ -1,0 +1,45 @@
+name: Update economy data
+
+# SCB publishes at 08:00 Swedish time, the Riksbank at 09:30 and
+# Konjunkturinstitutet in the morning. Three weekday runs catch each release
+# within a couple of hours; the script commits only when a number changed.
+on:
+  schedule:
+    - cron: "20 7,9,14 * * 1-5"   # UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the CA bundle
+        run: pip install --quiet certifi
+
+      - name: Fetch the latest figures
+        run: python scripts/update_economy.py
+
+      - name: Commit if anything changed
+        run: |
+          if git diff --quiet -- data/; then
+            echo "No new data."
+            exit 0
+          fi
+          git config user.name "sverige-live-bot"
+          git config user.email "sverige-live-bot@users.noreply.github.com"
+          git add data/
+          git commit -m "data: economy update $(date -u +%Y-%m-%d)"
+          git push
