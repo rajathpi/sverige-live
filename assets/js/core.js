@@ -138,10 +138,26 @@
     label();
   }
 
+  /* ---------- installable app and offline notice ---------- */
+  const here = document.currentScript && document.currentScript.src;
+  if ("serviceWorker" in navigator && here && (location.protocol === "https:" || location.hostname === "127.0.0.1" || location.hostname === "localhost")) {
+    addEventListener("load", () => navigator.serviceWorker.register(new URL("../../sw.js", here)).catch(() => {}));
+  }
+  const OFF = { en: "Offline: showing the last data this browser loaded.", sv: "Offline: visar senaste data som laddats i den här webbläsaren." };
+  function offline() {
+    let b = document.getElementById("sl-offline");
+    if (navigator.onLine) { if (b) b.remove(); return; }
+    if (!b) { b = document.createElement("div"); b.id = "sl-offline"; b.setAttribute("role", "status"); document.body.prepend(b); }
+    b.textContent = OFF[lang()];
+  }
+  addEventListener("online", offline); addEventListener("offline", offline);
+  addEventListener("DOMContentLoaded", offline);
+
   /* ---------- the shared top nav follows <html lang>, whichever script set it ---------- */
   const NAV = { economy: ["Economy", "Ekonomi"], goteborg: ["Göteborg", "Göteborg"], kommuner: ["Kommuner", "Kommuner"], loner: ["Löner", "Löner"], netto: ["Netto", "Netto"] };
   function navText() {
     document.querySelectorAll(".nav a").forEach((a) => { const k = (a.getAttribute("href") || "").replace(/\.\.\/|\//g, ""); if (NAV[k]) a.textContent = NAV[k][lang() === "sv" ? 1 : 0]; });
+    offline();
   }
   new MutationObserver(navText).observe(root, { attributes: true, attributeFilter: ["lang"] });
   addEventListener("DOMContentLoaded", navText);

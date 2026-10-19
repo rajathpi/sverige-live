@@ -115,3 +115,5 @@ svg .axis path, svg .axis line { stroke: var(--border-strong); }
 .footer a { color: var(--muted); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+/* ---- offline notice (assets/js/core.js) ---- */
+#sl-offline { position: sticky; top: 0; z-index: 50; padding: 8px 18px; text-align: center; font-size: 13px; font-weight: 600; background: var(--h-amber); color: var(--h-on-accent); }
