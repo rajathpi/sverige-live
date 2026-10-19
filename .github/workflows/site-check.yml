@@ -1,0 +1,113 @@
+name: Site check
+
+# Daily: the live site, so an API or hosting problem opens an issue.
+# On push to main: the checked-out commit, served locally, so a broken change shows up before the next daily run.
+on:
+  schedule:
+    - cron: "30 6 * * *"   # UTC
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "economy/**"
+      - "goteborg/**"
+      - "kommuner/**"
+      - "loner/**"
+      - "netto/**"
+      - "assets/**"
+      - "data/**"
+      - "scripts/check_site.mjs"
+      - ".github/workflows/site-check.yml"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: site-check-${{ github.event_name == 'push' && 'push' || 'live' }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      LIVE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Kept outside the checkout so the repo needs no package.json.
+      - name: Install Playwright
+        run: |
+          npm install --no-save --prefix "$RUNNER_TEMP/pw" playwright@1.61.1
+          "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
+          echo "NODE_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
+
+      - name: Serve the checked-out commit
+        if: github.event_name == 'push'
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/dev/null 2>&1 &
+          for _ in $(seq 20); do
+            curl -fs -o /dev/null http://127.0.0.1:8765/ && exit 0
+            sleep 0.5
+          done
+          echo "Local server did not start" >&2
+          exit 1
+
+      - name: Check the pages
+        id: check
+        continue-on-error: true
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            base=http://127.0.0.1:8765
+          else
+            base="$LIVE_URL"
+          fi
+          node scripts/check_site.mjs --base "$base"
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-check
+          path: |
+            check-report.md
+            check-shots/
+          if-no-files-found: ignore
+
+      - name: Open or update the issue
+        if: github.event_name != 'push' && steps.check.outcome == 'failure'
+        run: |
+          gh label create site-check --color D93F0B --description "Daily site check failed" 2>/dev/null || true
+          {
+            echo "The site check failed against $LIVE_URL."
+            echo
+            echo "Run: $RUN_URL (screenshots are in the \`site-check\` artifact)"
+            echo
+            head -c 60000 check-report.md
+          } > issue-body.md
+          existing=$(gh issue list --label site-check --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file issue-body.md
+          else
+            gh issue create --title "Site check failed" --label site-check --body-file issue-body.md
+          fi
+
+      - name: Close the issue once the site passes
+        if: github.event_name != 'push' && steps.check.outcome == 'success'
+        run: |
+          for n in $(gh issue list --label site-check --state open --json number --jq '.[].number'); do
+            gh issue close "$n" --comment "The site check passes again: $RUN_URL"
+          done
+
+      - name: Fail the job if the check failed
+        if: steps.check.outcome == 'failure'
+        run: exit 1

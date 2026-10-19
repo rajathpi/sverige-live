@@ -1,0 +1,74 @@
+name: Refresh README screenshots
+
+on:
+  schedule:
+    - cron: "0 5 1 * *"   # UTC, 1st of the month
+  workflow_dispatch:
+    inputs:
+      gifs:
+        description: Also re-record the Löner GIFs (large files, grows the repo)
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screenshots
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Kept outside the checkout so the repo needs no package.json.
+      - name: Install Playwright
+        run: |
+          npm install --no-save --prefix "$RUNNER_TEMP/pw" playwright@1.61.1
+          "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
+          echo "NODE_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
+
+      - name: Install ffmpeg
+        if: inputs.gifs
+        run: command -v ffmpeg >/dev/null || { sudo apt-get update && sudo apt-get install -y ffmpeg; }
+
+      - name: Serve the checkout
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/dev/null 2>&1 &
+          for _ in $(seq 20); do
+            curl -fs -o /dev/null http://127.0.0.1:8765/ && exit 0
+            sleep 0.5
+          done
+          echo "Local server did not start" >&2
+          exit 1
+
+      - name: Capture
+        env:
+          GIF_FLAG: ${{ inputs.gifs && '--gifs' || '' }}
+        run: node scripts/capture_screens.mjs --base http://127.0.0.1:8765 --out docs/screens $GIF_FLAG
+
+      - name: Commit if anything changed
+        run: |
+          git add -A docs/screens
+          if git diff --cached --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs: refresh README screenshots"
+          # A push to main during the run makes a plain push fail.
+          for attempt in 1 2 3; do
+            git pull --rebase && git push && exit 0
+            git rebase --abort 2>/dev/null || true
+            echo "Push attempt $attempt failed, retrying"
+            sleep $((attempt * 5))
+          done
+          exit 1
