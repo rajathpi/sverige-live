@@ -34,7 +34,8 @@
   const BRK = new Map();      // kind|sector|year|code -> { sex: { cat: {avg,n} } }
   const LB = new Map();       // sector|year -> Map(code -> {med, avg, w, m, n, med5, y5})
   const CONCEPT = new Map();  // ssyk code -> JobTech concept id
-  let tok = 0;
+  const SNAP = { d: null }, FC = { d: null };  // ../data/loner.json and ../data/loner-forecast.json, written nightly
+  let tok = 0, ready = false;
 
   const t = (k, vars) => { let s = (TXT[st.lang] && TXT[st.lang][k]) ?? TXT.en[k] ?? k; if (vars) for (const [a, b] of Object.entries(vars)) s = s.split("{" + a + "}").join(b); return s; };
   const occName = (c) => (c === ALL ? t("allOcc") : META.occ[st.lang][c] || META.occ.en[c] || c);
@@ -86,6 +87,31 @@
     };
   }
 
+  // The nightly snapshot carries names and the default sector's figures, so the first view needs no SCB call.
+  async function loadSnap() {
+    const get = (u) => SL.fetchJSON(u, { timeout: 15000 }).catch(() => null);
+    const [s, f] = await Promise.all([get("../data/loner.json"), get("../data/loner-forecast.json")]);
+    FC.d = f && f.f ? f : null;
+    if (!s || !s.meta || !s.occ) return false;
+    SNAP.d = s;
+    Object.assign(META, { occ: s.meta.occ, grp: s.meta.grp, sec: s.meta.sec, years: s.years, notes: s.meta.notes, updated: s.updated });
+    return true;
+  }
+  // An occupation missing from the snapshot has no published figures in that sector, so it is not fetched either.
+  function fromSnap(codes) {
+    const d = SNAP.d;
+    if (!d || st.sector !== d.sector) return codes;
+    codes.forEach((c) => {
+      const o = d.occ[c], rec = {};
+      if (o) d.sexes.forEach((k, si) => {
+        rec[k] = {};
+        d.years.forEach((y, yi) => { const r = {}; d.measures.forEach((m, mi) => (r[m] = o[si][mi][yi])); if (Object.values(r).some(isNum)) rec[k][y] = r; });
+      });
+      DISP.set(st.sector + "|" + c, rec);
+    });
+    return [];
+  }
+
   async function loadMeta() {
     const [en, sv, gen, gsv] = await Promise.all([scbMeta(TABS.disp.new, "en"), scbMeta(TABS.disp.new, "sv"), scbMeta(GROUPS_TAB, "en"), scbMeta(GROUPS_TAB, "sv")]);
     const lab = (m, d) => m.dimension[d].category.label;
@@ -101,7 +127,7 @@
 
   /* ---------- data loaders ---------- */
   async function loadDisp(codes) {
-    const need = codes.filter((c) => !DISP.has(st.sector + "|" + c));
+    const need = fromSnap(codes.filter((c) => !DISP.has(st.sector + "|" + c)));
     if (!need.length) return;
     const sector = st.sector;
     const parts = await Promise.all(["old", "new"].map((w) => scb(TABS.disp[w], {
@@ -146,6 +172,14 @@
   async function loadBoard(year) {
     const key = st.sector + "|" + year;
     if (LB.has(key)) return LB.get(key);
+    const d = SNAP.d;
+    if (d && st.sector === d.sector && year === d.empYear) {
+      const yi = d.years.indexOf(year), y5 = Math.max(2014, year - 5), i5 = d.years.indexOf(y5);
+      const S = (k) => d.sexes.indexOf(k), M = (k) => d.measures.indexOf(k), m = new Map();
+      for (const [c, o] of Object.entries(d.occ)) m.set(c, { med: o[S("1+2")][M("med")][yi], avg: o[S("1+2")][M("avg")][yi], w: o[S("2")][M("med")][yi], m: o[S("1")][M("med")][yi], n: d.emp[c] ?? null, med5: o[S("1+2")][M("med")][i5], y5 });
+      LB.set(key, m);
+      return m;
+    }
     const sector = st.sector, y5 = Math.max(2014, year - 5);
     const w = tabFor("disp", year), cc = TABS.disp.c[w];
     const w5 = tabFor("disp", y5), cc5 = TABS.disp.c[w5];
@@ -169,6 +203,8 @@
   }
 
   /* ---------- helpers on series ---------- */
+  // The model forecast covers the median in the snapshot's sector; anything else falls back to the simple projection.
+  const fc = (c, meas = st.meas) => { const f = FC.d; return f && st.sector === f.sector && meas === "med" && f.base === lastYear() && f.f[c] && f.f[c][st.sex] ? f.f[c][st.sex] : null; };
   function series(c, k, m) { return META.years.map((y) => [y, disp(c, k, y)?.[m] ?? null]); }
   function growth(pts) { // average yearly change over the last five years with data
     const ok = pts.filter((p) => isNum(p[1]));
@@ -250,7 +286,7 @@
   /* ---------- URL ---------- */
   function readURL() {
     const p = new URLSearchParams(location.search);
-    let lang = p.get("lang"); try { lang = lang || localStorage.getItem("lonLang"); } catch (e) { /* ignore */ }
+    let lang = p.get("lang"); try { lang = lang || localStorage.getItem("slLang") || localStorage.getItem("lonLang"); } catch (e) { /* ignore */ }
     if (lang === "sv" || lang === "en") st.lang = lang;
     const o = (p.get("o") || "").split(",").filter((c) => /^\d{4}$/.test(c) && META.occ.en[c] && !NOT_OCC.has(c));
     st.sel = (o.length ? o : DEFAULT_SEL).slice(0, MAXSEL);
@@ -331,14 +367,16 @@
     $("#lbSeg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { st.lb = b.dataset.b; applyLang(); writeURL(); drawBoard(); } });
     $("#langSeg").addEventListener("click", (e) => {
       const b = e.target.closest("button"); if (!b) return;
-      st.lang = b.dataset.l; try { localStorage.setItem("lonLang", st.lang); } catch (err) { /* ignore */ }
+      st.lang = b.dataset.l; try { localStorage.setItem("slLang", st.lang); localStorage.setItem("lonLang", st.lang); } catch (err) { /* ignore */ }
       applyLang(); if (!$("#browser").hidden) renderBrowser(); writeURL(); renderAll(); drawJobs();
+      window.dispatchEvent(new CustomEvent("lon:lang", { detail: { lang: st.lang } }));
     });
     $("#projTog").addEventListener("change", (e) => { st.proj = e.target.checked; drawTrend(); drawKpis(); });
     $("#idxTog").addEventListener("change", (e) => { st.idx = e.target.checked; drawTrend(); });
     $("#mySal").addEventListener("input", (e) => {
       const v = +e.target.value.replace(/[^\d]/g, "");
-      st.mine = v > 0 ? v : null; drawStand(); drawSpread();
+      // Below 1 000 kr the number is still being typed; drawing it would stretch the axis to zero.
+      st.mine = v >= 1000 ? v : null; drawStand(); drawSpread();
     });
     $("#lb").addEventListener("click", rowAdd); $("#rel").addEventListener("click", rowAdd);
     $("#lb").addEventListener("keydown", rowKey); $("#rel").addEventListener("keydown", rowKey);
@@ -367,6 +405,7 @@
       drawBoard(); drawRelated();
       if (!$("#browser").hidden && reloadAll) renderBrowser();
       SL.setStatus($("#status"), "ok", esc(t("status", { n: 429, y: lastYear() })) + (META.updated ? " · " + esc(SL.fmtDate(META.updated)) : ""));
+      if (!ready) { ready = true; window.dispatchEvent(new CustomEvent("lon:ready")); }
     } catch (e) {
       console.error(e);
       if (my === tok) SL.setStatus($("#status"), "err", esc(t("statusErr", { e: e.message })));
@@ -391,8 +430,10 @@
     const v = (x) => (isNum(x) ? SL.fmt(x) + "<small>kr</small>" : na);
     const ratio = w && m && isNum(w.med) && isNum(m.med) ? w.med / m.med * 100 : null;
     let projTile = "";
-    if (gr && now > gr.to) projTile = tile(t("kNow", { y: now }), "≈ " + SL.fmt(Math.round(gr.last[1] * Math.pow(1 + gr.g, now - gr.to) / 100) * 100) + "<small>kr</small>", esc(t("kNowSub")));
-    el.innerHTML = `<div class="kh"><span class="dot" style="background:${colOf(c)}"></span><b>${esc(occName(c))}</b><small>SSYK ${c} · ${esc(sexName(st.sex))} · ${esc(secName(st.sector))} · ${st.year}</small></div><div class="ktiles">` +
+    const f = fc(c, "med"), fi = f ? FC.d.years.indexOf(now) : -1;
+    if (fi >= 0) projTile = tile(t("kNow", { y: now }), "≈ " + SL.fmt(f[fi][0]) + "<small>kr</small>", esc(t("kFcSub", { lo: SL.fmt(f[fi][1]), hi: SL.fmt(f[fi][2]) })));
+    else if (gr && now > gr.to) projTile = tile(t("kNow", { y: now }), "≈ " + SL.fmt(Math.round(gr.last[1] * Math.pow(1 + gr.g, now - gr.to) / 100) * 100) + "<small>kr</small>", esc(t("kNowSub")));
+    el.innerHTML = `<div class="kh"><span class="dot" style="background:${colOf(c)}"></span><b>${esc(occName(c))}</b><small>SSYK ${c} · ${esc(sexName(st.sex))} · ${esc(secName(st.sector))} · ${st.year}</small>${r && isNum(r.med) ? `<a class="xlink" href="../netto/?sal=${Math.round(r.med)}">${esc(t("toNetto"))} →</a>` : ""}</div><div class="ktiles">` +
       tile(t("kMedian"), v(r && r.med), esc(t("kMedSub"))) +
       tile(t("kAverage"), v(r && r.avg), esc(t("kAvgSub"))) +
       tile(t("kEmp"), n && isNum(n.n) ? SL.fmt(n.n) : n ? na : "…", esc(t("kEmpSub", { year: st.year }))) +
@@ -479,18 +520,25 @@
     const S = codes.map((c) => {
       let pts = series(c, st.sex, st.meas);
       const gr = growth(pts);
-      let proj = [];
-      if (st.proj && gr) proj = d3.range(0, PROJ_YEARS + 1).map((i) => [gr.to + i, gr.last[1] * Math.pow(1 + gr.g, i)]);
+      let proj = [], fband = null;
+      const f = st.proj ? fc(c) : null, base = f ? pts.find((p) => p[0] === FC.d.base) : null;
+      if (f && base && isNum(base[1])) {
+        proj = [[base[0], base[1]], ...FC.d.years.map((y, i) => [y, f[i][0]])];
+        if (c === st.sel[0]) fband = [[base[0], base[1], base[1]], ...FC.d.years.map((y, i) => [y, f[i][1], f[i][2]])];
+      } else if (st.proj && gr) proj = d3.range(0, PROJ_YEARS + 1).map((i) => [gr.to + i, gr.last[1] * Math.pow(1 + gr.g, i)]);
       let band = null;
       if (c === st.sel[0] && st.meas === "med" && !st.idx) band = META.years.map((y) => { const r = disp(c, st.sex, y); return r && isNum(r.p25) && isNum(r.p75) ? [y, r.p25, r.p75] : null; }).filter(Boolean);
       if (st.idx) {
         const b = pts.find((p) => isNum(p[1]));
-        if (b) { const f = (v) => (isNum(v) ? v / b[1] * 100 : null); pts = pts.map((p) => [p[0], f(p[1])]); proj = proj.map((p) => [p[0], f(p[1])]); }
+        if (b) { const f = (v) => (isNum(v) ? v / b[1] * 100 : null); pts = pts.map((p) => [p[0], f(p[1])]); proj = proj.map((p) => [p[0], f(p[1])]); if (fband) fband = fband.map((p) => [p[0], f(p[1]), f(p[2])]); }
       }
-      return { c, pts, proj, band, gr };
+      return { c, pts, proj, band, fband, gr, model: !!(f && base && isNum(base[1])) };
     });
     lg.innerHTML = S.map((s) => `<span><i style="background:${colOf(s.c)}"></i>${esc(occName(s.c))}${s.gr ? ` <b class="${s.gr.g >= 0 ? "up-good" : "down-bad"}">${SL.signed(s.gr.g * 100, 1)} %${esc(t("perYear"))}</b>` : ""}</span>`).join("");
-    const all = S.flatMap((s) => s.pts.concat(s.proj).map((p) => p[1]).concat(s.band ? s.band.flatMap((b) => [b[1], b[2]]) : [])).filter(isNum);
+    const all = S.flatMap((s) => s.pts.concat(s.proj).map((p) => p[1]).concat(s.band ? s.band.flatMap((b) => [b[1], b[2]]) : []).concat(s.fband ? s.fband.flatMap((b) => [b[1], b[2]]) : [])).filter(isNum);
+    const bt = FC.d && FC.d.backtest, cov = bt ? Math.round(d3.mean(Object.values(bt.coverage)) / 10) : 8;
+    const note = document.querySelector('[data-t="trendNote"]');
+    if (note) note.textContent = st.proj && S.some((s) => s.model) ? t("trendNoteFc", { m1: bt ? SL.fmt(bt.mape.model["1"], 1) : "–", m3: bt ? SL.fmt(bt.mape.model["3"], 1) : "–", n1: bt ? SL.fmt(bt.mape.naive["3"], 1) : "–", cov, a: bt ? bt.testedOn[0] : "", b: bt ? bt.testedOn[1] : "" }) : t("trendNote");
     if (!all.length) return emptyMsg(el);
     const h = 340, mL = 54, mR = 14, mT = 10, mB = 26;
     const { svg, w } = svgIn(el, h);
@@ -508,6 +556,7 @@
     const line = d3.line().defined((d) => isNum(d[1])).x((d) => x(d[0])).y((d) => y(d[1]));
     S.forEach((s) => {
       if (s.band && s.band.length > 1) svg.append("path").attr("d", d3.area().x((d) => x(d[0])).y0((d) => y(d[1])).y1((d) => y(d[2]))(s.band)).attr("fill", colOf(s.c)).attr("fill-opacity", 0.12);
+      if (s.fband) svg.append("path").attr("class", "fband").attr("d", d3.area().x((d) => x(d[0])).y0((d) => y(d[1])).y1((d) => y(d[2]))(s.fband)).attr("fill", colOf(s.c)).attr("fill-opacity", 0.2).attr("stroke", colOf(s.c)).attr("stroke-opacity", 0.35).attr("stroke-dasharray", "2 3");
     });
     S.slice().reverse().forEach((s) => {
       const ref = s.c === ALL;
@@ -522,8 +571,9 @@
         rule.attr("x1", x(yr)).attr("x2", x(yr)).style("opacity", 1);
         const isP = yr > lastYear();
         const rows = S.map((s) => {
-          const p = (isP ? s.proj : s.pts).find((q) => q[0] === yr);
-          return `<span style="color:${SL.css("--c" + (s.c === ALL ? 8 : (slots.get(s.c) ?? 0) + 1))}">●</span> ${esc(clip(occName(s.c), 260))}: ${p && isNum(p[1]) ? (st.idx ? SL.fmt(p[1], 1) : kr(Math.round(p[1]))) : "–"}`;
+          const p = (isP ? s.proj : s.pts).find((q) => q[0] === yr), fb = isP && s.fband ? s.fband.find((q) => q[0] === yr) : null;
+          const v = (n) => (st.idx ? SL.fmt(n, 1) : kr(Math.round(n)));
+          return `<span style="color:${SL.css("--c" + (s.c === ALL ? 8 : (slots.get(s.c) ?? 0) + 1))}">●</span> ${esc(clip(occName(s.c), 260))}: ${p && isNum(p[1]) ? v(p[1]) + (fb ? ` <span style="opacity:.75">(${v(fb[1])} – ${v(fb[2])})</span>` : "") : "–"}`;
         });
         SL.tip(e, `<b>${yr}${isP ? " · " + esc(t("projected")) : ""}</b><br>` + rows.join("<br>"));
       })
@@ -713,11 +763,32 @@
       (notes.length ? `<details><summary>${sv ? "SCB:s egna anmärkningar" : "SCB's own notes"}</summary><ul>${notes.map((s) => `<li>${esc(s)}</li>`).join("")}</ul></details>` : "");
   }
 
+  /* ---------- "Show as table" under every chart ---------- */
+  function tables() {
+    const occs = () => [...st.sel, ALL];
+    const head = (first) => [first, ...occs().map(occName)];
+    SL.tableToggle($("#spread"), () => ({ caption: $("#spreadSub").textContent, cols: [t("tOcc"), "P10", "P25", t("mMed"), "P75", "P90", t("mAvg")],
+      rows: occs().map((c) => { const r = disp(c, st.sex, st.year) || {}; return [occName(c), r.p10, r.p25, r.med, r.p75, r.p90, r.avg]; }) }));
+    SL.tableToggle($("#trend"), () => {
+      const yrs = META.years.concat(st.proj && FC.d && fc(st.sel[0] || ALL) ? FC.d.years : []);
+      return { caption: $("#trendSub").textContent, cols: head(t("tYear")), rows: yrs.map((y) => [y > lastYear() ? `${y} (${t("projected")})` : String(y), ...occs().map((c) => {
+        if (y <= lastYear()) return disp(c, st.sex, y)?.[st.meas] ?? null;
+        const f = fc(c); return f ? f[FC.d.years.indexOf(y)][0] : null;
+      })]) };
+    });
+    SL.tableToggle($("#gender"), () => ({ caption: $("#genderSub").textContent, cols: [t("tOcc"), t("women"), t("men"), t("tRatio")],
+      rows: occs().map((c) => { const w = disp(c, "2", st.year)?.med, m = disp(c, "1", st.year)?.med; return [occName(c), w, m, isNum(w) && isNum(m) ? Math.round(w / m * 1000) / 10 : null]; }) }));
+    SL.tableToggle($("#ratio"), () => ({ caption: t("ratioSub"), cols: head(t("tYear")),
+      rows: META.years.map((y) => [String(y), ...occs().map((c) => { const a = disp(c, "2", y)?.med, b = disp(c, "1", y)?.med; return isNum(a) && isNum(b) ? Math.round(a / b * 1000) / 10 : null; })]) }));
+    ["age", "edu", "reg"].forEach((k) => SL.tableToggle($("#" + k), () => ({ caption: $("#" + k + "Sub").textContent, cols: head(t(k + "T")),
+      rows: cats(k).map((cat) => [cat.l, ...occs().map((o) => brk(k, o, st.sex, cat.k)?.avg ?? null)]) })));
+  }
+
   /* ---------- start ---------- */
   (async function init() {
     SL.setStatus($("#status"), "stale", "Connecting to SCB…");
     try {
-      await loadMeta();
+      if (!(await loadSnap())) await loadMeta();
     } catch (e) {
       console.error(e);
       SL.setStatus($("#status"), "err", esc(TXT.en.statusErr.replace("{e}", e.message)));
@@ -726,6 +797,7 @@
     readURL();
     applyLang();
     wire();
+    tables();
     changed(true);
   })();
 })();

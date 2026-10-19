@@ -132,3 +132,10 @@ ul.ads small { display: block; color: var(--faint); font-size: 12px; }
   .kpi .value { font-size: 24px; }
   .topbar .in { gap: 10px; }
 }
+
+/* links to the other dashboards */
+.xlink { font-size: 13px; font-weight: 600; text-decoration: none; }
+.xlink:hover { text-decoration: underline; }
+.kh .xlink { margin-left: auto; }
+.xlinks { margin: 8px 0 0; }
+.xlinks .xlink::after { content: " →"; }
