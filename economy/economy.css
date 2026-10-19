@@ -1,4 +1,4 @@
-.calendar { margin-bottom: 16px; }
+.calendar { margin-top: 16px; }
 .cal-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
 .cal-head h2 { margin: 0; }
 .cal-head .sub { margin: 0; }
@@ -21,3 +21,15 @@
 .target-band { fill: var(--good); opacity: .09; }
 .crosshair line { stroke: var(--muted); stroke-dasharray: 3 3; }
 .focus-dot { stroke: var(--surface); stroke-width: 2; }
+
+.kpi-head { display: flex; align-items: baseline; gap: 0 12px; flex-wrap: wrap; margin: 0 0 10px; }
+.kpi-head h2 { margin: 0; font-family: var(--head); font-stretch: 112%; font-weight: 700; font-size: 17px; letter-spacing: -.01em; }
+.kpi-head .info { align-self: center; margin-left: -4px; }
+.kpi-head .sub { margin: 0; color: var(--muted); font-size: 13.5px; }
+.kpi { cursor: pointer; transition: border-color .15s; }
+.kpi:hover { border-color: var(--border-strong); }
+.kpi:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.sub b { color: var(--text); font-weight: 700; }
+.xlink { margin: 10px 0 0; font-size: 13px; }
+.xlink a { color: var(--muted); }
+.xlink a:hover { color: var(--text); }

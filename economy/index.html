@@ -5,72 +5,87 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Economy · Sverige Live</title>
 <meta name="description" content="Inflation, the policy rate, unemployment, house prices and confidence in Sweden, from SCB, the Riksbank and Konjunkturinstitutet.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2318181b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 17l5-5 4 3 7-8'/%3E%3Cpath d='M15 7h4v4'/%3E%3C/svg%3E">
 <script>(function(){var t=null;try{t=new URLSearchParams(location.search).get("theme")||localStorage.getItem("hubTheme")}catch(e){}document.documentElement.dataset.theme=t==="dark"?"dark":"light"})()</script>
 <link rel="stylesheet" href="../assets/css/kit.css">
 <link rel="stylesheet" href="../assets/css/base.css">
 <script src="../assets/js/theme.js" defer></script>
 <link rel="stylesheet" href="economy.css">
+<link rel="stylesheet" href="../assets/css/guide-kit.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" defer></script>
 <script src="../assets/js/core.js" defer></script>
+<script src="i18n.js" defer></script>
+<script src="../assets/js/guide-kit.js" defer></script>
+<script src="guide.js" defer></script>
 <script src="economy.js" defer></script>
 </head>
 <body>
-<header class="topbar"><div class="in"><a class="brand" href="../">Sverige <span>Live</span></a><nav class="nav" aria-label="Dashboards"><a href="../economy/" aria-current="page">Economy</a><a href="../goteborg/">Göteborg</a><a href="../kommuner/">Kommuner</a><a href="../loner/">Löner</a></nav><span class="sp"></span><span data-hub-theme-slot></span></div></header>
+<header class="topbar"><div class="in"><a class="brand" href="../">Sverige <span>Live</span></a><nav class="nav" aria-label="Dashboards"><a href="../economy/" aria-current="page">Economy</a><a href="../goteborg/">Göteborg</a><a href="../kommuner/">Kommuner</a><a href="../loner/">Löner</a><a href="../netto/">Netto</a></nav><span class="sp"></span>
+  <div class="seg" data-lang-seg role="group" aria-label="Language"><button type="button" data-l="en">EN</button><button type="button" data-l="sv">SV</button></div>
+  <span data-hub-theme-slot></span></div></header>
 
 <main class="wrap">
   <section class="pagehead">
-    <h1>Economy <span>Sweden</span></h1>
-    <p>Inflation, interest rates, jobs, house prices and confidence. Data from SCB, the Riksbank and Konjunkturinstitutet, checked every weekday.</p>
-    <div class="status" id="status"><span class="dot"></span><span>Loading the latest figures…</span></div>
+    <h1 data-t="h1">Economy <span>Sweden</span></h1>
+    <p data-t="lead">How is Sweden's economy doing? The latest official figures on prices, interest rates, jobs, house prices and confidence, each with a one-line answer. Data from SCB, the Riksbank and Konjunkturinstitutet.</p>
+    <div class="metarow">
+      <div class="status" id="status" role="status"><span class="dot" aria-hidden="true"></span><span data-t="loading">Loading the latest figures…</span></div>
+      <div class="helpbtns"><button class="btn sm" id="tourBtn" type="button" data-t="tourBtn">Take the tour</button><button class="btn sm" id="guideBtn" type="button" aria-haspopup="dialog" data-t="guideBtn">Guide</button></div>
+    </div>
   </section>
 
-  <section class="card calendar" aria-labelledby="cal-h">
-    <div class="cal-head"><h2 id="cal-h">Next releases</h2><span class="sub">Riksbank dates are confirmed. Dates marked ≈ are estimates from each agency's usual schedule.</span></div>
-    <ol class="cal" id="calendar"><li class="loading">Loading</li></ol>
-  </section>
 
+  <div class="kpi-head"><h2 data-t="kpisT">Latest figures</h2><button class="info" type="button" data-g="kpis">?</button><span class="sub" data-t="kpisHint">Click a figure to jump to its chart.</span></div>
   <section class="grid kpis" id="kpis" aria-label="Key figures"></section>
 
   <section class="grid">
     <article class="card span-12">
-      <div class="chead"><div><h2>Inflation vs the policy rate</h2><p class="sub" id="infl-sub"></p></div>
-        <div class="seg" id="infl-range" role="group" aria-label="Time range"><button data-y="5">5 y</button><button data-y="10" class="on">10 y</button><button data-y="99">All</button></div></div>
+      <div class="chead"><div><h2><span data-t="inflT">Inflation vs the policy rate</span><button class="info" type="button" data-g="inflation">?</button></h2><p class="sub" id="infl-sub" aria-live="polite"></p></div>
+        <div class="seg" id="infl-range" role="group" aria-label="Time range"><button type="button" data-y="5" data-t="r5">5 y</button><button type="button" data-y="10" class="on" data-t="r10">10 y</button><button type="button" data-y="99" data-t="rAll">All</button></div></div>
       <div class="legend" id="infl-legend"></div>
       <div class="chart" id="infl-chart" style="height:340px"></div>
-      <p class="src">SCB (CPIF, CPI annual change) · Sveriges Riksbank (policy rate, month-end)</p>
+      <p class="xlink"><a href="../loner/" data-t="xInfl">Has pay kept up? Compare salaries in Löner →</a></p>
+      <p class="src" data-t="srcInfl">SCB (CPIF, CPI annual change) · Sveriges Riksbank (policy rate, month-end)</p>
     </article>
 
     <article class="card span-6">
-      <div class="chead"><div><h2>Unemployment</h2><p class="sub" id="unemp-sub"></p></div></div>
+      <div class="chead"><div><h2><span data-t="unempT">Unemployment</span><button class="info" type="button" data-g="unemployment">?</button></h2><p class="sub" id="unemp-sub"></p></div></div>
       <div class="chart" id="unemp-chart" style="height:260px"></div>
-      <p class="src">SCB, Labour Force Survey, ages 15–74: faint line = seasonally adjusted, bold line = SCB's smoothed trend</p>
+      <p class="xlink"><a href="../loner/" data-t="xUnemp">Looking for work? See open job ads in Löner →</a></p>
+      <p class="src" data-t="srcUnemp">SCB, Labour Force Survey, ages 15–74: faint line = seasonally adjusted, bold line = SCB's smoothed trend</p>
     </article>
 
     <article class="card span-6">
-      <div class="chead"><div><h2>House prices</h2><p class="sub" id="house-sub"></p></div>
-        <div class="seg" id="house-mode" role="group" aria-label="Show"><button data-m="yoy" class="on">% y/y</button><button data-m="index">Index</button></div></div>
+      <div class="chead"><div><h2><span data-t="houseT">House prices</span><button class="info" type="button" data-g="houses">?</button></h2><p class="sub" id="house-sub"></p></div>
+        <div class="seg" id="house-mode" role="group" aria-label="Show"><button type="button" data-m="yoy" class="on" data-t="mYoy">% y/y</button><button type="button" data-m="index" data-t="mIndex">Index</button></div></div>
       <div class="legend" id="house-legend"></div>
       <div class="chart" id="house-chart" style="height:236px"></div>
-      <p class="src">SCB, real estate price index, one- and two-dwelling buildings, quarterly</p>
+      <p class="src" data-t="srcHouse">SCB, real estate price index, one- and two-dwelling buildings, quarterly</p>
     </article>
 
     <article class="card span-7">
-      <div class="chead"><div><h2>Business and consumer confidence</h2><p class="sub" id="mood-sub"></p></div></div>
+      <div class="chead"><div><h2><span data-t="moodT">Business and consumer confidence</span><button class="info" type="button" data-g="confidence">?</button></h2><p class="sub" id="mood-sub"></p></div></div>
       <div class="legend" id="mood-legend"></div>
       <div class="chart" id="mood-chart" style="height:260px"></div>
-      <p class="src">Konjunkturinstitutet, Economic Tendency Survey (100 = historical average)</p>
+      <p class="src" data-t="srcMood">Konjunkturinstitutet, Economic Tendency Survey (100 = historical average)</p>
     </article>
 
     <article class="card span-5">
-      <div class="chead"><div><h2>EUR/SEK</h2><p class="sub" id="fx-sub"></p></div></div>
+      <div class="chead"><div><h2><span data-t="fxT">EUR/SEK</span><button class="info" type="button" data-g="fx">?</button></h2><p class="sub" id="fx-sub"></p></div></div>
       <div class="chart" id="fx-chart" style="height:260px"></div>
-      <p class="src">Sveriges Riksbank, EUR/SEK daily fixing</p>
+      <p class="src" data-t="srcFx">Sveriges Riksbank, EUR/SEK daily fixing</p>
     </article>
   </section>
 
+  <section class="card calendar" aria-labelledby="cal-h">
+    <div class="cal-head"><h2 id="cal-h"><span data-t="calT">Next releases</span><button class="info" type="button" data-g="calendar">?</button></h2><span class="sub" data-t="calSub">Riksbank dates are confirmed. Dates marked ≈ are estimates from each agency's usual schedule.</span></div>
+    <ol class="cal" id="calendar"><li class="loading" data-t="loadingShort">Loading…</li></ol>
+  </section>
+
   <footer class="footer">
-    <span>Data: <a href="https://www.scb.se/en/">SCB</a> (CC0) · <a href="https://www.riksbank.se/en-gb/statistics/">Sveriges Riksbank</a> · <a href="https://www.konj.se/english.html">Konjunkturinstitutet</a> · fetched by <a href="https://github.com/rajathpi/sverige-live/blob/main/scripts/update_economy.py">scripts/update_economy.py</a></span>
-    <span>Code: MIT · <a href="https://github.com/rajathpi/sverige-live">github.com/rajathpi/sverige-live</a></span>
+    <span><button class="lnk" id="footGuide" type="button" aria-haspopup="dialog" data-t="guideLink">User guide</button></span>
+    <span data-t="footData">Data: <a href="https://www.scb.se/en/">SCB</a> (CC0) · <a href="https://www.riksbank.se/en-gb/statistics/">Sveriges Riksbank</a> · <a href="https://www.konj.se/english.html">Konjunkturinstitutet</a> · fetched by <a href="https://github.com/rajathpi/sverige-live/blob/main/scripts/update_economy.py">scripts/update_economy.py</a></span>
+    <span data-t="footCode">Code: MIT · <a href="https://github.com/rajathpi/sverige-live">github.com/rajathpi/sverige-live</a></span>
   </footer>
 </main>
 </body>
