@@ -5,7 +5,7 @@
 .kpi .value { white-space: nowrap; }
 .kpi .meta { flex-direction: column; gap: 1px; }
 .kpi .delta { min-height: 1.2em; }
-.kpi .label { align-items: baseline; }
+.kpi .label { align-items: baseline; flex-wrap: wrap; }
 .kpi .label .pill { font-size: 10.5px; padding: 1px 7px; }
 .kpi .loading { padding: 14px 0; }
 .rows { align-items: start; }
@@ -68,3 +68,11 @@
 .kpi .spark { overflow: hidden; }
 .kpi .spark svg { display: block; width: 100%; max-width: 100%; height: 42px; }
 .donut-row li .n, .donut-row li .v { white-space: nowrap; }
+
+.answer { margin: 4px 0 4px; font-size: 15.5px; line-height: 1.4; color: var(--text); }
+.answer:empty { display: none; }
+.answer b { font-weight: 750; }
+.golinks { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px !important; font-size: 13.5px; }
+.golinks span { color: var(--faint); }
+.golinks a { color: var(--text); }
+.footer .lnk { color: var(--muted); }

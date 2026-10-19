@@ -2,6 +2,8 @@
 (function () {
   "use strict";
   const { fmt, esc, css, fmtTime, setStatus, tip, hideTip } = SL;
+  SL.initLang();
+  const tx = SL.translator(window.GBG_TEXT);
   const $ = (s) => document.querySelector(s);
   const TZ = "Europe/Stockholm";
 
@@ -9,8 +11,14 @@
   const f2 = (n) => String(n).padStart(2, "0");
   const dayFmt = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
   const hourFmt = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", hourCycle: "h23" });
-  const wdFmt = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, weekday: "short" });
-  const wdDayFmt = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, weekday: "short", day: "numeric" });
+  const LOC = { en: "en-GB", sv: "sv-SE" };
+  const wdFmts = {}, wdDayFmts = {};
+  Object.keys(LOC).forEach((l) => {
+    wdFmts[l] = new Intl.DateTimeFormat(LOC[l], { timeZone: TZ, weekday: "short" });
+    wdDayFmts[l] = new Intl.DateTimeFormat(LOC[l], { timeZone: TZ, weekday: "short", day: "numeric" });
+  });
+  const wdFmt = { format: (t) => wdFmts[SL.lang()].format(t) };
+  const wdDayFmt = { format: (t) => wdDayFmts[SL.lang()].format(t) };
   const dayKey = (t) => dayFmt.format(t);
   const sthHour = (t) => parseInt(hourFmt.format(t), 10) % 24;
   const addDays = (key, n) => { const d = new Date(key + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
@@ -20,14 +28,22 @@
     return out;
   }
   const hourLbl = (t) => f2(sthHour(t));
+  // "today at 14:32", "yesterday at 14:32" or "Sat 17 at 14:32", in the chosen language.
+  function whenLbl(t) {
+    const k = dayKey(t), today = dayKey(Date.now()), h = fmtTime(t);
+    if (k === today) return tx("when_today", { h });
+    if (k === addDays(today, -1)) return tx("when_yesterday", { h });
+    if (k === addDays(today, 1)) return tx("when_tomorrow", { h });
+    return tx("when_day", { d: wdDayFmt.format(t), h });
+  }
 
   /* ---------- app state: one record per source ---------- */
   const SOURCES = {
-    obs: { name: "SMHI observations", every: 5, load: loadObs },
-    fc: { name: "SMHI forecast", every: 60, load: loadForecast },
-    svk: { name: "Svenska kraftnät", every: 5, load: loadSvk },
-    price: { name: "electricity price", every: 15, load: loadPrice },
-    police: { name: "Polisen", every: 2, load: loadPolice },
+    obs: { name: "srcNameObs", every: 5, load: loadObs },
+    fc: { name: "srcNameFc", every: 60, load: loadForecast },
+    svk: { name: "srcNameSvk", every: 5, load: loadSvk },
+    price: { name: "srcNamePrice", every: 15, load: loadPrice },
+    police: { name: "srcNamePolice", every: 2, load: loadPolice },
   };
   const S = {}; Object.keys(SOURCES).forEach((k) => (S[k] = { data: null, ts: 0, err: null, busy: false }));
   const UI = { priceDay: "today", area: "gbg", win: 168 };
@@ -49,7 +65,7 @@
     const lo = kind === "bars" ? 0 : ext[0], hi = ext[1] === lo ? lo + 1 : ext[1];
     const y = d3.scaleLinear([lo, hi], [h - 3, 4]);
     const col = css("--accent");
-    svg.attr("role", "img").attr("aria-label", "Trend over the last day");
+    svg.attr("role", "img").attr("aria-label", tx("sparkLbl"));
     if (kind === "bars") {
       const bw = Math.max(1, (w - 4) / pts.length - 1);
       svg.selectAll("rect").data(pts).join("rect").attr("x", (p) => x(p.x) - bw / 2).attr("width", bw).attr("y", (p) => y(p.y)).attr("height", (p) => Math.max(0, y(lo) - y(p.y))).attr("fill", col).attr("opacity", 0.7);
@@ -62,17 +78,16 @@
   }
   function loadingOrError(el, k, what) {
     if (S[k].data) return false;
-    el.innerHTML = S[k].err ? `<div class="error">Couldn't load ${esc(what)} (${esc(S[k].err)}). Retrying automatically.</div>` : `<div class="loading">Loading</div>`;
+    el.innerHTML = S[k].err ? `<div class="error">${esc(tx("errLoad", { what: tx(what), e: S[k].err }))}</div>` : `<div class="loading">${esc(tx("loading"))}</div>`;
     return true;
   }
   function setSrc(id, k, html, observed) {
     const el = $("#" + id); if (!el) return;
     let t = html + (observed ? ` · ${observed}` : "");
-    if (S[k].err && S[k].data) t += ` · <span style="color:var(--warn)">refresh failed, showing data from ${fmtTime(S[k].ts)}</span>`;
-    else if (S[k].err) t += ` · <span style="color:var(--bad)">unavailable right now</span>`;
+    if (S[k].err && S[k].data) t += ` · <span style="color:var(--warn)">${esc(tx("refreshFailed", { t: fmtTime(S[k].ts) }))}</span>`;
+    else if (S[k].err) t += ` · <span style="color:var(--bad)">${esc(tx("unavailableSrc"))}</span>`;
     el.innerHTML = t;
   }
-  const srcSmhi = 'Source: <a href="https://opendata.smhi.se/" rel="noopener">SMHI Open Data</a> (CC BY 4.0)';
 
   /* ====================================================================
      1. SMHI observations, Göteborg A
@@ -102,34 +117,34 @@
     return el.querySelector(".spark");
   }
   function kpiMissing(id, label, k, msg) {
-    $(id).innerHTML = `<div class="label"><span>${label}</span></div><div class="value">–</div><div class="delta flat">${S[k].err ? esc(msg || "Unavailable right now") : "Loading"}</div><div class="spark"></div><div class="meta"></div>`;
+    $(id).innerHTML = `<div class="label"><span>${label}</span></div><div class="value">–</div><div class="delta flat">${S[k].err ? esc(msg || tx("unavailable")) : esc(tx("loading"))}</div><div class="spark"></div><div class="meta"></div>`;
   }
   function renderObsKpis() {
     const d = S.obs.data;
-    if (!d) { ["#k-temp", "#k-wind", "#k-rain"].forEach((id, i) => kpiMissing(id, ["Temperature now", "Wind", "Rain, last hour"][i], "obs", "SMHI observations unavailable")); return; }
+    if (!d) { ["#k-temp", "#k-wind", "#k-rain"].forEach((id, i) => kpiMissing(id, tx(["kTemp", "kWind", "kRain"][i]), "obs", tx("obsDown"))); return; }
     const T = last(d.temp), W = last(d.wind), H = last(d.hum), P = last(d.pres), R = last(d.rain);
     const old = Date.now() - T.x > 3 * 3600e3;
     const fl = feelsLike(T.y, W && W.y);
-    const range = d.temp.length > 1 ? `24 h: ${fmt(d3.min(d.temp, (p) => p.y), 1)} to ${fmt(d3.max(d.temp, (p) => p.y), 1)} °C` : "";
+    const range = d.temp.length > 1 ? tx("range24", { a: fmt(d3.min(d.temp, (p) => p.y), 1), b: fmt(d3.max(d.temp, (p) => p.y), 1) }) : "";
     const sp = kpi("#k-temp", {
-      label: "Temperature now", pill: '<span class="pill">Göteborg A</span>',
+      label: tx("kTemp"), pill: '<span class="pill">Göteborg A</span>',
       value: `${fmt(T.y, 1)}<small>°C</small>`,
-      delta: fl != null ? `Feels like ${fmt(fl, 1)} °C` : (H ? `Humidity ${fmt(H.y)} %` : ""),
-      meta: [range, `${H ? "Humidity " + fmt(H.y) + " %" : ""}${H && P ? " · " : ""}${P ? fmt(P.y) + " hPa" : ""}`, `${old ? "Stale: " : "Observed "}${fmtTime(T.x)}`].filter(Boolean), spark: 1,
+      delta: fl != null ? tx("feels", { v: fmt(fl, 1) }) : (H ? tx("humidity", { v: fmt(H.y) }) : ""),
+      meta: [range, `${H ? tx("humidity", { v: fmt(H.y) }) : ""}${H && P ? " · " : ""}${P ? fmt(P.y) + " hPa" : ""}`, tx(old ? "stale" : "observed", { t: fmtTime(T.x) })].filter(Boolean), spark: 1,
     });
     spark(sp, d.temp);
     if (W) {
-      const sw = kpi("#k-wind", { label: "Wind", value: `${fmt(W.y, 1)}<small>m/s</small>`, delta: windWord(W.y), meta: [`24 h max: ${fmt(d3.max(d.wind, (p) => p.y), 1)} m/s`, `Observed ${fmtTime(W.x)}`], spark: 1 });
+      const sw = kpi("#k-wind", { label: tx("kWind"), value: `${fmt(W.y, 1)}<small>m/s</small>`, delta: windWord(W.y), meta: [tx("windMax", { v: fmt(d3.max(d.wind, (p) => p.y), 1) }), tx("observed", { t: fmtTime(W.x) })], spark: 1 });
       spark(sw, d.wind);
-    } else kpiMissing("#k-wind", "Wind", "obs", "No wind reading");
+    } else kpiMissing("#k-wind", tx("kWind"), "obs", tx("noWind"));
     if (R) {
       const total = d3.sum(d.rain, (p) => p.y);
-      const sr = kpi("#k-rain", { label: "Rain, last hour", value: `${fmt(R.y, 1)}<small>mm</small>`, delta: R.y > 0 ? "Raining" : "Dry", meta: [`Last 24 h: ${fmt(total, 1)} mm`, `Observed ${fmtTime(R.x)}`], spark: 1 });
+      const sr = kpi("#k-rain", { label: tx("kRain"), value: `${fmt(R.y, 1)}<small>mm</small>`, delta: tx(R.y > 0 ? "raining" : "dry"), meta: [tx("rain24", { v: fmt(total, 1) }), tx("observed", { t: fmtTime(R.x) })], spark: 1 });
       spark(sr, d.rain, "bars");
-    } else kpiMissing("#k-rain", "Rain, last hour", "obs", "No precipitation reading");
+    } else kpiMissing("#k-rain", tx("kRain"), "obs", tx("noRain"));
   }
   function windWord(v) {
-    return v < 0.5 ? "Calm" : v < 3.4 ? "Light air to breeze" : v < 8 ? "Gentle to moderate breeze" : v < 14 ? "Fresh to strong breeze" : v < 21 ? "Near gale to gale" : "Storm";
+    return tx("w" + (v < 0.5 ? 0 : v < 3.4 ? 1 : v < 8 ? 2 : v < 14 ? 3 : v < 21 ? 4 : 5));
   }
 
   /* ====================================================================
@@ -150,7 +165,8 @@
     }).filter((r) => isFinite(r.t));
     return { created: j.createdTime || j.referenceTime, rows };
   }
-  const SYM = { 1: ["sun", "Clear sky"], 2: ["partly", "Nearly clear sky"], 3: ["partly", "Variable cloudiness"], 4: ["partly", "Half-clear sky"], 5: ["cloud", "Cloudy"], 6: ["cloud", "Overcast"], 7: ["fog", "Fog"], 8: ["showers", "Light rain showers"], 9: ["showers", "Moderate rain showers"], 10: ["rain", "Heavy rain showers"], 11: ["thunder", "Thunderstorm"], 12: ["sleet", "Light sleet showers"], 13: ["sleet", "Moderate sleet showers"], 14: ["sleet", "Heavy sleet showers"], 15: ["sleet", "Light snow showers"], 16: ["snow", "Moderate snow showers"], 17: ["snow", "Heavy snow showers"], 18: ["rain", "Light rain"], 19: ["rain", "Moderate rain"], 20: ["rain", "Heavy rain"], 21: ["thunder", "Thunder"], 22: ["sleet", "Light sleet"], 23: ["sleet", "Moderate sleet"], 24: ["sleet", "Heavy sleet"], 25: ["snow", "Light snowfall"], 26: ["snow", "Moderate snowfall"], 27: ["snow", "Heavy snowfall"] };
+  const SYM = { 1: "sun",  2: "partly",  3: "partly",  4: "partly",  5: "cloud",  6: "cloud",  7: "fog",  8: "showers",  9: "showers",  10: "rain",  11: "thunder",  12: "sleet",  13: "sleet",  14: "sleet",  15: "sleet",  16: "snow",  17: "snow",  18: "rain",  19: "rain",  20: "rain",  21: "thunder",  22: "sleet",  23: "sleet",  24: "sleet",  25: "snow",  26: "snow",  27: "snow" };
+  const symName = (c) => (c != null && (window.GBG_SYM[SL.lang()] || window.GBG_SYM.en)[c]) || "";
   /* weather glyphs: 24px line icons, studio-hub style (stroke 1.5, round caps) */
   const WX_PATH = {
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/>',
@@ -167,13 +183,21 @@
 
   function renderForecast() {
     const el = $("#c-fc"), strip = $("#d-fc");
-    setSrc("src-fc", "fc", 'Source: <a href="https://opendata.smhi.se/" rel="noopener">SMHI Open Data</a> (CC BY 4.0), SNOW1g point forecast for 57,71 N, 11,97 E', S.fc.data ? "model run " + fmtTime(S.fc.data.created) : "");
-    if (loadingOrError(el, "fc", "the forecast")) { strip.innerHTML = ""; return; }
+    setSrc("src-fc", "fc", tx("srcFc"), S.fc.data ? tx("modelRun", { t: fmtTime(S.fc.data.created) }) : "");
+    if (loadingOrError(el, "fc", "whatFc")) { strip.innerHTML = ""; $("#a-fc").innerHTML = ""; return; }
     const all = S.fc.data.rows, now = Date.now();
-    const rows = all.filter((r) => r.t >= now - 3600e3 && r.t <= now + 48 * 3600e3 && isFinite(r.temp));
-    if (rows.length < 3) { el.innerHTML = '<div class="empty">No forecast data for the next 48 hours.</div>'; }
-    else drawForecast(el, rows, now);
+    const rows = fcRows(now);
+    if (rows.length < 3) { el.innerHTML = `<div class="empty">${esc(tx("fcEmpty"))}</div>`; $("#a-fc").innerHTML = ""; }
+    else { drawForecast(el, rows, now); $("#a-fc").innerHTML = forecastAnswer(rows, now); }
     renderDays(all, now, strip);
+  }
+  const fcRows = (now) => S.fc.data.rows.filter((r) => r.t >= now - 3600e3 && r.t <= now + 48 * 3600e3 && isFinite(r.temp));
+  function forecastAnswer(rows, now) {
+    const lo = Math.round(d3.min(rows, (r) => r.temp)), hi = Math.round(d3.max(rows, (r) => r.temp));
+    const ahead = rows.filter((r) => r.t > now), wet = ahead.filter((r) => r.rain >= 0.1), mm = fmt(d3.sum(wet, (r) => r.rain), 1);
+    const temp = lo === hi ? tx("fcAnsFlat", { lo: fmt(lo) }) : tx("fcAnsRange", { lo: fmt(lo), hi: fmt(hi) });
+    const rain = !wet.length ? tx("fcAnsDry") : wet[0].s0 <= now ? tx("fcAnsNow", { mm }) : tx("fcAnsFrom", { when: whenLbl(wet[0].s0), mm });
+    return `${temp} ${rain}`;
   }
   function drawForecast(el, rows, now) {
     const mob = (el.clientWidth || 300) < 480;
@@ -236,12 +260,12 @@
       const [mx] = d3.pointer(e, svg.node());
       const r = rows[bis(rows, x.invert(mx))]; if (!r) return;
       cross.attr("x1", x(r.t)).attr("x2", x(r.t)).style("display", null);
-      const s = SYM[r.sym];
-      tip(e, `<b>${wdFmt.format(r.t)} ${hourLbl(r.t)}:00</b>${s ? " · " + s[1] : ""}<br>${fmt(r.temp, 1)} °C · rain ${fmt(r.rain || 0, 1)} mm${r.pop != null ? " (" + fmt(r.pop) + " %)" : ""}<br>Wind ${fmt(r.wind, 1)} m/s${r.gust != null ? ", gusts " + fmt(r.gust, 1) : ""}`);
+      const s = symName(r.sym);
+      tip(e, `<b>${wdFmt.format(r.t)} ${hourLbl(r.t)}:00</b>${s ? " · " + s : ""}<br>${fmt(r.temp, 1)} °C · ${tx("tipRain")} ${fmt(r.rain || 0, 1)} mm${r.pop != null ? " (" + fmt(r.pop) + " %)" : ""}<br>${tx("tipWind")} ${fmt(r.wind, 1)} m/s${r.gust != null ? ", " + tx("tipGusts") + " " + fmt(r.gust, 1) : ""}`);
     };
     svg.append("rect").attr("x", ml).attr("y", top).attr("width", w - ml - mr).attr("height", wTop + H2 - top).attr("fill", "transparent").style("touch-action", "pan-y")
       .on("pointermove", onMove).on("pointerdown", onMove).on("pointerleave", () => { cross.style("display", "none"); hideTip(); });
-    svg.attr("role", "img").attr("aria-label", `Forecast for the next 48 hours: temperature between ${fmt(tmin, 0)} and ${fmt(tmax, 0)} °C, up to ${fmt(d3.max(rain), 1)} mm precipitation per period, wind up to ${fmt(d3.max(rows, (r) => r.wind), 0)} m/s.`);
+    svg.attr("role", "img").attr("aria-label", tx("fcAria", { lo: fmt(tmin, 0), hi: fmt(tmax, 0), rain: fmt(d3.max(rain), 1), wind: fmt(d3.max(rows, (r) => r.wind), 0) }));
   }
   function renderDays(all, now, strip) {
     const byDay = new Map();
@@ -254,9 +278,9 @@
       const mn = d3.min(rs, (r) => r.temp), mx = d3.max(rs, (r) => r.temp);
       const rn = rs.filter((r) => r.rain != null), sum = d3.sum(rn, (r) => r.rain);
       const noon = rs.reduce((a, b) => (Math.abs(sthHour(b.t) - 13) < Math.abs(sthHour(a.t) - 13) ? b : a));
-      const s = SYM[noon.sym] || ["", ""];
-      const lbl = k === today ? "Today" : wdDayFmt.format(new Date(k + "T12:00:00Z"));
-      return `<div class="day" title="${esc(s[1])}"><div class="dn">${esc(lbl)}</div><div class="di" aria-hidden="true">${wxIcon(s[0])}</div><div class="dt">${fmt(mx)}° <span>${fmt(mn)}°</span></div><div class="dp">${rn.length ? (sum >= 0.1 ? fmt(sum, 1) + " mm" : "dry") : "&nbsp;"}</div><span class="sr-only">${esc(s[1])}</span></div>`;
+      const nm = symName(noon.sym);
+      const lbl = k === today ? tx("dayStripToday") : wdDayFmt.format(new Date(k + "T12:00:00Z"));
+      return `<div class="day" title="${esc(nm)}"><div class="dn">${esc(lbl)}</div><div class="di" aria-hidden="true">${wxIcon(SYM[noon.sym])}</div><div class="dt">${fmt(mx)}° <span>${fmt(mn)}°</span></div><div class="dp">${rn.length ? (sum >= 0.1 ? fmt(sum, 1) + " mm" : esc(tx("dryLc"))) : "&nbsp;"}</div><span class="sr-only">${esc(nm)}</span></div>`;
     }).join("");
   }
 
@@ -264,12 +288,13 @@
      3. Svenska kraftnät control room
      ==================================================================== */
   const MIX = [
-    { id: "2", key: "nuclear", name: "Nuclear", col: "--c4" },
-    { id: "3", key: "hydro", name: "Hydro", col: "--c1" },
-    { id: "5", key: "wind", name: "Wind", col: "--c6" },
-    { id: "4", key: "thermal", name: "Thermal", col: "--c5" },
-    { id: "6", key: "other", name: "Solar and other", col: "--c2" },
+    { id: "2", key: "nuclear", col: "--c4" },
+    { id: "3", key: "hydro", col: "--c1" },
+    { id: "5", key: "wind", col: "--c6" },
+    { id: "4", key: "thermal", col: "--c5" },
+    { id: "6", key: "other", col: "--c2" },
   ];
+  const mixName = (m) => tx("mix_" + m.key);
   async function loadSvk() {
     const today = dayKey(Date.now());
     const [pr, si] = await Promise.allSettled([
@@ -302,44 +327,55 @@
   function latestMix(d) { return last(d.rows); }
 
   function renderPowerKpi() {
-    if (!S.svk.data) { kpiMissing("#k-power", "Sweden: production", "svk", "Svenska kraftnät unavailable"); return; }
+    if (!S.svk.data) { kpiMissing("#k-power", tx("kPower"), "svk", tx("svkDown")); return; }
     const d = S.svk.data, L = latestMix(d);
     const cons = L.cons, net = L.net != null ? L.net : (cons != null ? L.prod - cons : null);
     const el = kpi("#k-power", {
-      label: "Sweden: production", pill: '<span class="pill">national</span>',
+      label: tx("kPower"), pill: `<span class="pill">${esc(tx("pillNational"))}</span>`,
       value: `${fmt(L.prod / 1000, 1)}<small>GW</small>`,
-      delta: net == null ? "" : net < 0 ? `Importing ${fmt(-net / 1000, 1)} GW` : `Exporting ${fmt(net / 1000, 1)} GW`,
+      delta: net == null ? "" : net < 0 ? tx("importGW", { v: fmt(-net / 1000, 1) }) : tx("exportGW", { v: fmt(net / 1000, 1) }),
       cls: "flat",
-      meta: [cons != null ? `Consumption ${fmt(cons / 1000, 1)} GW` : "", `As of ${fmtTime(L.x)}`].filter(Boolean), spark: 1,
+      meta: [cons != null ? tx("consGW", { v: fmt(cons / 1000, 1) }) : "", tx("asOf", { t: fmtTime(L.x) })].filter(Boolean), spark: 1,
     });
     spark(el, d.rows.map((r) => ({ x: r.x, y: r.prod })));
   }
   function renderNow() {
     const el = $("#b-now");
-    setSrc("src-now", "svk", 'Source: <a href="https://www.svk.se/om-kraftsystemet/kontrollrummet/" rel="noopener">Svenska kraftnät</a> control room', S.svk.data ? "as of " + fmtTime(latestMix(S.svk.data).x) : "");
-    if (loadingOrError(el, "svk", "the power data")) return;
+    setSrc("src-now", "svk", tx("srcNow"), S.svk.data ? tx("asOfSrc", { t: fmtTime(latestMix(S.svk.data).x) }) : "");
+    if (loadingOrError(el, "svk", "whatPower")) { $("#a-now").innerHTML = ""; return; }
     const d = S.svk.data, L = latestMix(d), cons = L.cons;
     const net = L.net != null ? L.net : (cons != null ? L.prod - cons : null);
     const parts = d.keys.map((m) => ({ m, v: Math.max(0, L[m.key] || 0) })).filter((p) => p.v > 0);
     const tot = d3.sum(parts, (p) => p.v) || 1;
-    el.innerHTML = `<div class="bignums"><div class="bn"><div class="t">Production</div><div class="v">${fmt(L.prod)}<small>MW</small></div></div><div class="bn"><div class="t">Consumption</div><div class="v">${cons != null ? fmt(cons) : "–"}<small>MW</small></div></div></div>
-      <p class="badge-row">${net == null ? "" : net < 0 ? `<span class="pill warn">Importing ${fmt(-net)} MW</span>` : `<span class="pill good">Exporting ${fmt(net)} MW</span>`} <span style="color:var(--muted);font-size:12.5px">${net == null ? "" : net < 0 ? "Sweden uses more than it produces right now." : "Sweden produces more than it uses right now."}</span></p>
-      <div class="donut-row"><div class="donut" id="donut" role="img" aria-label="Share of production by source"></div><ul>${parts.map((p) => `<li><i style="background:var(${p.m.col})"></i><span class="n">${p.m.name}</span><span class="v">${fmt(p.v)} MW · ${fmt((p.v / tot) * 100)} %</span></li>`).join("")}</ul></div>`;
+    $("#a-now").innerHTML = powerAnswer(parts, tot);
+    el.innerHTML = `<div class="bignums"><div class="bn"><div class="t">${esc(tx("production"))}</div><div class="v">${fmt(L.prod)}<small>MW</small></div></div><div class="bn"><div class="t">${esc(tx("consumption"))}</div><div class="v">${cons != null ? fmt(cons) : "–"}<small>MW</small></div></div></div>
+      <p class="badge-row">${net == null ? "" : net < 0 ? `<span class="pill warn">${esc(tx("importMW", { v: fmt(-net) }))}</span>` : `<span class="pill good">${esc(tx("exportMW", { v: fmt(net) }))}</span>`} <span style="color:var(--muted);font-size:12.5px">${net == null ? "" : esc(tx(net < 0 ? "importNote" : "exportNote"))}</span></p>
+      <div class="donut-row"><div class="donut" id="donut" role="img" aria-label="${esc(tx("donutLbl"))}"></div><ul>${parts.map((p) => `<li><i style="background:var(${p.m.col})"></i><span class="n">${esc(mixName(p.m))}</span><span class="v">${fmt(p.v)} MW · ${fmt((p.v / tot) * 100)} %</span></li>`).join("")}</ul></div>`;
     const dn = $("#donut"), size = 150, r = size / 2;
     const svg = d3.select(dn).append("svg").attr("viewBox", `0 0 ${size} ${size}`);
     const arc = d3.arc().innerRadius(r * 0.62).outerRadius(r - 2).padAngle(0.015).cornerRadius(2);
     const g = svg.append("g").attr("transform", `translate(${r},${r})`);
     g.selectAll("path").data(d3.pie().sort(null).value((p) => p.v)(parts)).join("path").attr("d", arc).attr("fill", (a) => css(a.data.m.col))
-      .on("pointermove", (e, a) => tip(e, `<b>${a.data.m.name}</b><br>${fmt(a.data.v)} MW · ${fmt((a.data.v / tot) * 100)} %`)).on("pointerleave", hideTip);
+      .on("pointermove", (e, a) => tip(e, `<b>${esc(mixName(a.data.m))}</b><br>${fmt(a.data.v)} MW · ${fmt((a.data.v / tot) * 100)} %`)).on("pointerleave", hideTip);
     g.append("text").attr("text-anchor", "middle").attr("y", -2).style("font", "700 20px var(--sans)").style("fill", css("--text")).text(fmt(L.prod / 1000, 1));
     g.append("text").attr("text-anchor", "middle").attr("y", 14).text("GW");
   }
+  function powerAnswer(parts, tot) {
+    const top = parts.slice().sort((a, b) => b.v - a.v).slice(0, 2), p = fmt((d3.sum(top, (x) => x.v) / tot) * 100);
+    return top.length > 1 ? tx("nowAns", { a: mixName(top[0].m), b: mixName(top[1].m).toLowerCase(), p }) : top.length ? tx("nowAns1", { a: mixName(top[0].m), p }) : "";
+  }
+  function mixAnswer(rows, keys) {
+    const sums = keys.map((m) => ({ m, v: d3.sum(rows, (r) => Math.max(0, r[m.key] || 0)) })), tot = d3.sum(sums, (x) => x.v);
+    const top = d3.greatest(sums, (x) => x.v);
+    return top && tot > 0 ? tx("mixAns", { a: mixName(top.m), p: fmt((top.v / tot) * 100) }) : "";
+  }
   function renderMix() {
     const el = $("#c-mix"), lg = $("#l-mix");
-    setSrc("src-mix", "svk", 'Source: <a href="https://www.svk.se/om-kraftsystemet/kontrollrummet/" rel="noopener">Svenska kraftnät</a> control room, 15 minute values, Sweden-wide; "solar and other" is Svenska kraftnät\'s unspecified category', S.svk.data ? "updated " + fmtTime(S.svk.data.updated || latestMix(S.svk.data).x) : "");
-    if (loadingOrError(el, "svk", "the power mix")) { lg.innerHTML = ""; $("#se3").innerHTML = ""; return; }
+    setSrc("src-mix", "svk", tx("srcMix"), S.svk.data ? tx("updatedSrc", { t: fmtTime(S.svk.data.updated || latestMix(S.svk.data).x) }) : "");
+    if (loadingOrError(el, "svk", "whatMix")) { lg.innerHTML = ""; $("#se3").innerHTML = ""; $("#a-mix").innerHTML = ""; return; }
     const d = S.svk.data, rows = d.rows, keys = d.keys;
-    lg.innerHTML = keys.map((m) => `<span><i style="background:var(${m.col})"></i>${m.name}</span>`).join("") + (rows.some((r) => r.cons != null) ? '<span><i style="background:transparent;border-top:2px dashed var(--text);height:0;width:14px;border-radius:0;vertical-align:3px"></i>Consumption</span>' : "");
+    $("#a-mix").innerHTML = mixAnswer(rows, keys);
+    lg.innerHTML = keys.map((m) => `<span><i style="background:var(${m.col})"></i>${esc(mixName(m))}</span>`).join("") + (rows.some((r) => r.cons != null) ? '<span><i style="background:transparent;border-top:2px dashed var(--text);height:0;width:14px;border-radius:0;vertical-align:3px"></i>' + esc(tx("consumption")) + '</span>' : "");
     const mob = (el.clientWidth || 300) < 480;
     const { svg, w, h } = mk(el, mob ? 250 : 290);
     const ml = 44, mr = 10, top = 8, bot = 24;
@@ -362,13 +398,13 @@
     const onMove = (e) => {
       const [mx] = d3.pointer(e, svg.node()); const r = rows[bis(rows, x.invert(mx))]; if (!r) return;
       cross.attr("x1", x(r.x)).attr("x2", x(r.x)).style("display", null);
-      tip(e, `<b>${fmtTime(r.x)}</b><br>` + keys.map((m) => `${m.name}: ${fmt(r[m.key] || 0)} MW`).join("<br>") + `<br><b>Production ${fmt(r.prod)} MW</b>` + (r.cons != null ? `<br>Consumption ${fmt(r.cons)} MW` : ""));
+      tip(e, `<b>${fmtTime(r.x)}</b><br>` + keys.map((m) => `${esc(mixName(m))}: ${fmt(r[m.key] || 0)} MW`).join("<br>") + `<br><b>${tx("tipProd", { v: fmt(r.prod) })}</b>` + (r.cons != null ? `<br>${tx("tipCons", { v: fmt(r.cons) })}` : ""));
     };
     svg.append("rect").attr("x", ml).attr("y", top).attr("width", w - ml - mr).attr("height", h - bot - top).attr("fill", "transparent").style("touch-action", "pan-y")
       .on("pointermove", onMove).on("pointerdown", onMove).on("pointerleave", () => { cross.style("display", "none"); hideTip(); });
-    svg.attr("role", "img").attr("aria-label", "Stacked area chart of today's Swedish electricity production by source with consumption line.");
+    svg.attr("role", "img").attr("aria-label", tx("mixAria"));
     const s3 = d.se3;
-    $("#se3").innerHTML = s3 ? `Göteborg's bidding area (SE3), ${fmtTime(s3.x)}: consumption <b>${fmt(s3.actual)} MW</b>${s3.planned != null ? ` against ${fmt(s3.planned)} MW planned` : ""}.` : "";
+    $("#se3").innerHTML = s3 ? tx("se3Line", { t: fmtTime(s3.x), a: fmt(s3.actual), plan: s3.planned != null ? tx("se3Plan", { p: fmt(s3.planned) }) : "" }) : "";
   }
 
   /* ====================================================================
@@ -397,28 +433,29 @@
   const ore = (v) => fmt(v, Math.abs(v) < 10 ? 1 : 0);
 
   function renderPriceKpi() {
-    if (!S.price.data) { kpiMissing("#k-price", "Electricity now, SE3", "price", "Price source unavailable"); return; }
+    if (!S.price.data) { kpiMissing("#k-price", tx("kPrice"), "price", tx("priceDown")); return; }
     const sl = S.price.data.today, cur = nowSlot(sl) || last(sl), st = dayStats(sl);
     const diff = (cur.p - st.avg) / Math.max(1, Math.abs(st.avg)) * 100;
     const el = kpi("#k-price", {
-      label: "Electricity now", pill: '<span class="pill">SE3</span>',
+      label: tx("kPrice"), pill: '<span class="pill">SE3</span>',
       value: `${ore(cur.p)}<small>öre/kWh</small>`,
-      delta: Math.abs(diff) < 3 ? "About today's average" : `${fmt(Math.abs(diff))} % ${diff > 0 ? "above" : "below"} today's average`,
+      delta: Math.abs(diff) < 3 ? tx("avgAbout") : tx(diff > 0 ? "avgAbove" : "avgBelow", { p: fmt(Math.abs(diff)) }),
       cls: Math.abs(diff) < 3 ? "flat" : diff > 0 ? "up-bad" : "down-good",
-      meta: [`Cheapest ${hourLbl(st.cheap.t)}–${hourLbl(st.cheap.t + 3600e3)}: ${ore(st.cheap.avg)} öre`, `Spot price, before grid fees and taxes`], spark: 1,
+      meta: [tx("cheapMeta", { a: hourLbl(st.cheap.t), b: hourLbl(st.cheap.t + 3600e3), v: ore(st.cheap.avg) }), tx("spotNote")], spark: 1,
     });
     spark(el, sl.map((s) => ({ x: s.t0, y: s.p })));
   }
   function renderPrice() {
     const el = $("#c-price"), chips = $("#chips-price");
-    setSrc("src-price", "price", 'Source: <a href="https://www.elprisetjustnu.se/" rel="noopener">elprisetjustnu.se</a>, a community service built on Nord Pool day-ahead data (not a government source). Prices exclude grid fees and taxes');
+    setSrc("src-price", "price", tx("srcPrice"));
     const tmBtn = document.querySelector('[data-day="tomorrow"]');
     const hasTm = !!(S.price.data && S.price.data.tomorrow.length);
     tmBtn.hidden = !hasTm;
     if (!hasTm && UI.priceDay === "tomorrow") setDay("today");
-    if (loadingOrError(el, "price", "prices")) { chips.innerHTML = ""; return; }
+    if (loadingOrError(el, "price", "whatPrice")) { chips.innerHTML = ""; $("#a-price").innerHTML = ""; return; }
     const isTm = UI.priceDay === "tomorrow" && hasTm;
     const sl = isTm ? S.price.data.tomorrow : S.price.data.today, st = dayStats(sl);
+    $("#a-price").innerHTML = priceAnswer(st, isTm, sl);
     const mob = (el.clientWidth || 300) < 480;
     const { svg, w, h } = mk(el, mob ? 220 : 250);
     const ml = 40, mr = 8, top = 24, bot = 24;
@@ -437,14 +474,22 @@
       .attr("y", (s) => (s.p >= 0 ? y(s.p) : y(0))).attr("height", (s) => Math.max(1, Math.abs(y(s.p) - y(0))))
       .attr("fill", (s) => { const k = Math.floor(s.t0 / 3600e3); return k === cheapK ? css("--good") : k === dearK ? css("--bad") : css("--c1"); })
       .attr("opacity", (s) => (!isTm && s.t1 <= now ? 0.45 : 0.95))
-      .on("pointermove", (e, s) => tip(e, `<b>${fmtTime(s.t0)}–${fmtTime(s.t1)}</b><br>${ore(s.p)} öre/kWh<br>${fmt(s.p / 100, 3)} SEK/kWh`)).on("pointerdown", (e, s) => tip(e, `<b>${fmtTime(s.t0)}–${fmtTime(s.t1)}</b><br>${ore(s.p)} öre/kWh`)).on("pointerleave", hideTip);
+      .on("pointermove", (e, s) => tip(e, `<b>${fmtTime(s.t0)}–${fmtTime(s.t1)}</b><br>${ore(s.p)} öre/kWh<br>${fmt(s.p / 100, 3)} ${tx("sekkwh")}`)).on("pointerdown", (e, s) => tip(e, `<b>${fmtTime(s.t0)}–${fmtTime(s.t1)}</b><br>${ore(s.p)} öre/kWh`)).on("pointerleave", hideTip);
     if (!isTm && now >= t0 && now <= t1) {
       svg.append("line").attr("class", "nowline").attr("x1", x(now)).attr("x2", x(now)).attr("y1", top).attr("y2", h - bot).style("pointer-events", "none");
-      svg.append("text").attr("class", "nowtxt").attr("x", Math.min(w - 26, x(now) + 4)).attr("y", top - 12).text("now");
+      svg.append("text").attr("class", "nowtxt").attr("x", Math.min(w - 26, x(now) + 4)).attr("y", top - 12).text(tx("nowWord"));
     }
-    svg.attr("role", "img").attr("aria-label", `Electricity spot price for ${isTm ? "tomorrow" : "today"}, from ${ore(d3.min(sl, (s) => s.p))} to ${ore(d3.max(sl, (s) => s.p))} öre per kWh.`);
+    svg.attr("role", "img").attr("aria-label", tx("priceAria", { day: tx(isTm ? "dayTomorrow" : "dayToday"), lo: ore(d3.min(sl, (s) => s.p)), hi: ore(d3.max(sl, (s) => s.p)) }));
     const cur = !isTm ? nowSlot(sl) : null;
-    chips.innerHTML = `${cur ? `<div class="chip">Now<b>${ore(cur.p)} öre</b></div>` : ""}<div class="chip good">Cheapest hour ${hourLbl(st.cheap.t)}–${hourLbl(st.cheap.t + 3600e3)}<b>${ore(st.cheap.avg)} öre</b></div><div class="chip bad">Priciest hour ${hourLbl(st.dear.t)}–${hourLbl(st.dear.t + 3600e3)}<b>${ore(st.dear.avg)} öre</b></div><div class="chip">Day average<b>${ore(st.avg)} öre</b></div>`;
+    const hr = (h) => ({ a: hourLbl(h.t), b: hourLbl(h.t + 3600e3) });
+    chips.innerHTML = `${cur ? `<div class="chip">${esc(tx("chipNow"))}<b>${tx("oreV", { v: ore(cur.p) })}</b></div>` : ""}<div class="chip good">${esc(tx("chipCheap", hr(st.cheap)))}<b>${tx("oreV", { v: ore(st.cheap.avg) })}</b></div><div class="chip bad">${esc(tx("chipDear", hr(st.dear)))}<b>${tx("oreV", { v: ore(st.dear.avg) })}</b></div><div class="chip">${esc(tx("chipAvg"))}<b>${tx("oreV", { v: ore(st.avg) })}</b></div>`;
+  }
+  function priceAnswer(st, isTm, sl) {
+    const h = `${hourLbl(st.cheap.t)}–${hourLbl(st.cheap.t + 3600e3)}`, p = ore(st.cheap.avg), now = Date.now();
+    if (isTm) return tx("priceAnsTm", { h, p });
+    if (st.cheap.t + 3600e3 > now) return tx("priceAnsAhead", { h, p });
+    const cur = nowSlot(sl);
+    return cur ? tx("priceAnsPast", { h, p, n: ore(cur.p) }) : "";
   }
   function setDay(d) {
     UI.priceDay = d;
@@ -474,32 +519,39 @@
   const inArea = (e) => UI.area === "vg" || isGbg(e);
 
   function renderPoliceKpi() {
-    if (!S.police.data) { kpiMissing("#k-police", "Police events today", "police", "Polisen unavailable"); return; }
+    if (!S.police.data) { kpiMissing("#k-police", tx("kPolice"), "police", tx("policeDown")); return; }
     const ev = S.police.data.filter(isGbg), now = Date.now(), today = dayKey(now);
     const td = ev.filter((e) => dayKey(e.t) === today).length;
     const wk = ev.filter((e) => now - e.t <= 7 * 864e5).length;
     const h24 = ev.filter((e) => now - e.t <= 864e5).length;
-    kpi("#k-police", { label: "Police events today", pill: '<span class="pill">Göteborg</span>', value: `${fmt(td)}`, delta: ev[0] ? `Latest: ${esc(ev[0].type)}, ${fmtTime(ev[0].t)}` : "No events yet", meta: [`Last 24 h: ${fmt(h24)}`, `Last 7 days: ${fmt(wk)}`] });
+    kpi("#k-police", { label: tx("kPolice"), pill: '<span class="pill">Göteborg</span>', value: `${fmt(td)}`, delta: ev[0] ? tx("latest", { type: esc(ev[0].type), when: `${dayKey(ev[0].t) === today ? "" : wdDayFmt.format(ev[0].t) + " "}${fmtTime(ev[0].t)}` }) : tx("noEventsYet"), meta: [tx("last24", { n: fmt(h24) }), tx("last7", { n: fmt(wk) })] });
   }
   function renderFeed() {
     const el = $("#feed");
-    setSrc("src-feed", "police", 'Source: <a href="https://polisen.se/aktuellt/polisens-api/" rel="noopener">Polisen</a> events API. Swedish text is unchanged; positions are not shown because the police only give approximate, county-wide coordinates', S.police.data ? "fetched " + fmtTime(S.police.ts) : "");
-    if (!S.police.data) { el.innerHTML = `<li class="${S.police.err ? "error" : "loading"}">${S.police.err ? "Couldn't load police events (" + esc(S.police.err) + "). Retrying automatically." : "Loading"}</li>`; return; }
+    setSrc("src-feed", "police", tx("srcFeed"), S.police.data ? tx("fetchedSrc", { t: fmtTime(S.police.ts) }) : "");
+    $("#sub-feed").textContent = tx(UI.area === "vg" ? "subFeedVg" : "subFeedGbg");
+    if (!S.police.data) { el.innerHTML = `<li class="${S.police.err ? "error" : "loading"}">${esc(S.police.err ? tx("errLoad", { what: tx("whatPolice"), e: S.police.err }) : tx("loading"))}</li>`; $("#a-feed").innerHTML = ""; return; }
     const ev = S.police.data.filter(inArea);
-    $("#sub-feed").textContent = UI.area === "vg" ? "Latest reports for Göteborg and the rest of Västra Götaland." : "Latest reports for Göteborg, newest first.";
-    if (!ev.length) { el.innerHTML = '<li class="empty">No events published.</li>'; return; }
-    el.innerHTML = ev.slice(0, 60).map((e) => `<li><div class="fh"><span class="when">${esc(e.when)}</span><span class="pill accent">${esc(e.type)}</span>${UI.area === "vg" ? `<span class="pill">${esc(e.place)}</span>` : ""}</div><div class="ft">${esc(e.summary || "No summary.")}</div><a href="${esc(e.url)}" rel="noopener" target="_blank">Read on polisen.se</a></li>`).join("");
+    $("#a-feed").innerHTML = ev.length ? tx("feedAns", { type: esc(ev[0].type), when: whenLbl(ev[0].t) }) : tx("feedAnsNone");
+    if (!ev.length) { el.innerHTML = `<li class="empty">${esc(tx("noEvents"))}</li>`; return; }
+    el.innerHTML = ev.slice(0, 60).map((e) => `<li><div class="fh"><span class="when">${esc(e.when)}</span><span class="pill accent">${esc(e.type)}</span>${UI.area === "vg" ? `<span class="pill">${esc(e.place)}</span>` : ""}</div><div class="ft">${esc(e.summary || tx("noSummary"))}</div><a href="${esc(e.url)}" rel="noopener" target="_blank">${esc(tx("readOn"))}</a></li>`).join("");
   }
-  function renderTypes() {
-    const el = $("#c-types");
-    if (!S.police.data) { el.innerHTML = S.police.err ? `<div class="error">Couldn't load police events (${esc(S.police.err)}).</div>` : '<div class="loading">Loading</div>'; return; }
+  const winKey = () => (UI.win === 24 ? "winTxt24" : "winTxt168");
+  const areaTxt = () => tx(UI.area === "vg" ? "areaTxtVg" : "areaTxtGbg");
+  function typeCounts() {
     const now = Date.now(), win = UI.win * 3600e3;
     const ev = S.police.data.filter((e) => inArea(e) && now - e.t <= win && !/^Sammanfattning/.test(e.type));
-    const lbl = UI.win === 24 ? "last 24 hours" : "last 7 days";
-    $("#sub-types").textContent = `${fmt(ev.length)} ${ev.length === 1 ? "event" : "events"} in the ${lbl}, ${UI.area === "vg" ? "Göteborg and Västra Götaland" : "Göteborg"} (daily summaries excluded).`;
-    if (!ev.length) { el.innerHTML = '<div class="empty">No events in this period.</div>'; return; }
-    let counts = d3.rollups(ev, (v) => v.length, (e) => e.type).sort((a, b) => b[1] - a[1]);
-    if (counts.length > 9) { const rest = d3.sum(counts.slice(8), (c) => c[1]); counts = counts.slice(0, 8).concat([["Other types", rest]]); }
+    return { ev, counts: d3.rollups(ev, (v) => v.length, (e) => e.type).sort((a, b) => b[1] - a[1]) };
+  }
+  function renderTypes() {
+    const el = $("#c-types"), ans = $("#a-types");
+    if (!S.police.data) { el.innerHTML = S.police.err ? `<div class="error">${esc(tx("errLoadShort", { e: S.police.err }))}</div>` : `<div class="loading">${esc(tx("loading"))}</div>`; ans.innerHTML = ""; return; }
+    const { ev, counts: all } = typeCounts(), win = tx(winKey());
+    ans.innerHTML = ev.length ? tx("typesAns", { n: fmt(ev.length), rep: tx(ev.length === 1 ? "rep1" : "repN"), area: areaTxt(), win, type: esc(all[0][0]) }) : tx("typesAnsNone", { area: areaTxt(), win });
+    if (!ev.length) { el.innerHTML = `<div class="empty">${esc(tx("noEventsPeriod"))}</div>`; return; }
+    const OTHER = tx("otherTypes");
+    let counts = all;
+    if (counts.length > 9) { const rest = d3.sum(counts.slice(8), (c) => c[1]); counts = counts.slice(0, 8).concat([[OTHER, rest]]); }
     const mob = (el.clientWidth || 300) < 400;
     const rowH = 26, ml = mob ? 108 : 138, mr = 30;
     const { svg, w, h } = mk(el, counts.length * rowH + 6);
@@ -507,10 +559,10 @@
     const g = svg.selectAll("g").data(counts).join("g").attr("transform", (c, i) => `translate(0,${i * rowH + 3})`);
     const clip = (s) => (s.length > (mob ? 17 : 22) ? s.slice(0, mob ? 16 : 21) + "…" : s);
     g.append("text").attr("x", ml - 8).attr("y", rowH / 2).attr("dy", "0.32em").attr("text-anchor", "end").style("fill", css("--text")).text((c) => clip(c[0])).append("title").text((c) => c[0]);
-    g.append("rect").attr("x", ml).attr("y", 3).attr("height", rowH - 8).attr("rx", 3).attr("width", (c) => Math.max(2, x(c[1]))).attr("fill", (c) => (c[0] === "Other types" ? css("--c8") : css("--accent")))
-      .on("pointermove", (e, c) => tip(e, `<b>${esc(c[0])}</b><br>${fmt(c[1])} events`)).on("pointerleave", hideTip);
+    g.append("rect").attr("x", ml).attr("y", 3).attr("height", rowH - 8).attr("rx", 3).attr("width", (c) => Math.max(2, x(c[1]))).attr("fill", (c) => (c[0] === OTHER ? css("--c8") : css("--accent")))
+      .on("pointermove", (e, c) => tip(e, `<b>${esc(c[0])}</b><br>${fmt(c[1])} ${tx(c[1] === 1 ? "event1" : "eventN")}`)).on("pointerleave", hideTip);
     g.append("text").attr("x", (c) => ml + Math.max(2, x(c[1])) + 5).attr("y", rowH / 2).attr("dy", "0.32em").text((c) => fmt(c[1]));
-    svg.attr("role", "img").attr("aria-label", `Police events by type, ${lbl}: ` + counts.map((c) => `${c[0]} ${c[1]}`).join(", "));
+    svg.attr("role", "img").attr("aria-label", tx("typesAria", { win, list: counts.map((c) => `${c[0]} ${c[1]}`).join(", ") }));
   }
 
   /* ====================================================================
@@ -527,12 +579,16 @@
   function updateStatus() {
     const keys = Object.keys(S), el = $("#status");
     const failing = keys.filter((k) => S[k].err), lastTs = Math.max(0, ...keys.map((k) => S[k].ts || 0));
-    const names = failing.map((k) => SOURCES[k].name).join(", ");
-    if (!lastTs && !failing.length) setStatus(el, "stale", "Loading live data…");
-    else if (failing.length === keys.length) setStatus(el, "err", `Offline · no source could be loaded (${esc(names)}); retrying`);
-    else if (failing.length) setStatus(el, "stale", `Partly live · updated ${fmtTime(lastTs)} · problem with ${esc(names)}`);
-    else setStatus(el, "ok", `Updated ${fmtTime(lastTs)}`);
+    const names = failing.map((k) => tx(SOURCES[k].name)).join(", ");
+    if (!lastTs && !failing.length) setStatus(el, "stale", esc(tx("loadingLive")));
+    else if (failing.length === keys.length) setStatus(el, "err", esc(tx("stStale", { n: names })));
+    else if (failing.length) setStatus(el, "stale", esc(tx("stPart", { t: fmtTime(lastTs), n: names })));
+    else setStatus(el, "ok", esc(tx("stOk", { t: fmtTime(lastTs) })));
   }
+  const keys = () => Object.keys(S);
+  let ready = false;
+  // The guide kit starts the first-visit tour on this event, so it fires once the first requests have all settled.
+  function fireReady() { if (ready) return; ready = true; window.dispatchEvent(new CustomEvent("sl:ready")); }
   async function run(k) {
     const st = S[k]; if (st.busy) return; st.busy = true;
     try { st.data = await SOURCES[k].load(); st.ts = Date.now(); st.err = null; }
@@ -540,6 +596,7 @@
     st.busy = false;
     try { renderAll(k); } catch (e) { console.error(e); }
     updateStatus();
+    if (!ready && keys().every((j) => S[j].ts || S[j].err)) fireReady();
   }
   function tick() {
     if (document.visibilityState === "hidden") return;
@@ -562,11 +619,52 @@
   seg("[data-area]", "area", "area", (v) => v);
   seg("[data-win]", "win", "win", (v) => +v);
 
-  /* redraw on resize / theme; start */
+  /* language: static text from [data-t], dynamic text by re-rendering in place */
+  const ARIA = [["#kpis", "ariaKpis"], ["#d-fc", "ariaDays"], ["#seg-day", "ariaDay"], ["#seg-area", "ariaArea"], ["#seg-win", "ariaWin"], ["#feed", "ariaFeed"]];
+  function applyLang() {
+    SL.applyText(window.GBG_TEXT);
+    ARIA.forEach(([sel, k]) => $(sel).setAttribute("aria-label", tx(k)));
+    document.querySelector('meta[name="description"]').setAttribute("content", tx("metaDesc"));
+  }
+
+  /* "Show as table" under each chart */
+  const tbl = (cols, rows, caption) => ({ caption, cols, rows });
+  function tablesInit() {
+    SL.tableToggle($("#d-fc"), () => {
+      if (!S.fc.data) return null;
+      const now = Date.now();
+      return tbl([tx("tblTime"), tx("tblTemp"), tx("tblRain"), tx("tblWind"), tx("tblGust"), tx("tblWx")],
+        fcRows(now).map((r) => [`${wdFmt.format(r.t)} ${hourLbl(r.t)}:00`, r.temp, r.rain ?? 0, r.wind, r.gust, symName(r.sym)]), tx("tblFc"));
+    });
+    SL.tableToggle($("#c-price"), () => {
+      if (!S.price.data) return null;
+      const isTm = UI.priceDay === "tomorrow" && S.price.data.tomorrow.length;
+      return tbl([tx("tblHour"), tx("tblOre")],
+        dayStats(isTm ? S.price.data.tomorrow : S.price.data.today).hr.map((h) => [`${hourLbl(h.t)}–${hourLbl(h.t + 3600e3)}`, h.avg]),
+        tx("tblPrice", { day: tx(isTm ? "dayTomorrow" : "dayToday") }));
+    });
+    SL.tableToggle($("#c-mix"), () => {
+      if (!S.svk.data) return null;
+      const d = S.svk.data;
+      return tbl([tx("tblTime"), ...d.keys.map(mixName), tx("tblProd"), tx("tblCons")],
+        d.rows.map((r) => [fmtTime(r.x), ...d.keys.map((m) => r[m.key] ?? 0), r.prod, r.cons]), tx("tblMix"));
+    });
+    SL.tableToggle($("#c-types"), () => {
+      if (!S.police.data) return null;
+      return tbl([tx("tblType"), tx("tblCount")], typeCounts().counts, tx("tblTypes", { area: areaTxt(), win: tx(winKey()) }));
+    });
+  }
+
+  /* redraw on resize / theme / language; start */
   const redraw = () => { try { renderAll(); } catch (e) { console.error(e); } };
   SL.onResize(redraw); SL.onTheme(redraw);
+  addEventListener("sl:lang", () => { applyLang(); updateStatus(); redraw(); });
   document.addEventListener("visibilitychange", tick);
+  applyLang();
+  updateStatus();
+  tablesInit();
   renderAll();
   tick();
   setInterval(tick, 15000);
+  setTimeout(fireReady, 8000);
 })();
