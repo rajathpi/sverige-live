@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sverige Live</title>
-<meta name="description" content="Dashboards on Swedish open data: the economy, Göteborg right now, all 290 kommuner compared, and salaries for every occupation.">
+<meta name="description" content="Dashboards on Swedish open data: the economy, Göteborg right now, all 290 kommuner compared, salaries for every occupation and take-home pay.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2318181b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 17l5-5 4 3 7-8'/%3E%3Cpath d='M15 7h4v4'/%3E%3C/svg%3E">
 <script>(function(){var t=null;try{t=new URLSearchParams(location.search).get("theme")||localStorage.getItem("hubTheme")}catch(e){}document.documentElement.dataset.theme=t==="dark"?"dark":"light"})()</script>
 <link rel="stylesheet" href="assets/css/kit.css">
@@ -26,7 +26,10 @@
   .now b { display: block; color: var(--h-text); font-size: 19px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
   footer { margin-top: 54px; font-size: 12px; color: var(--h-muted2); text-align: center; line-height: 1.8; }
   footer a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
-  @media (max-width: 760px) { h1 { font-size: 34px; } body { padding-top: 8vh; } #grid { grid-template-columns: 1fr; } }
+  .tile.wide { grid-column: 1 / -1; min-height: 0; flex-direction: row; align-items: center; justify-content: flex-start; gap: 20px; }
+  .corner { position: fixed; top: 14px; right: 92px; }
+  .corner .seg button { padding: 6px 9px; }
+  @media (max-width: 760px) { h1 { font-size: 34px; } body { padding-top: 8vh; } #grid { grid-template-columns: 1fr; } .tile.wide { flex-direction: column; align-items: flex-start; } .corner { position: absolute; } }
 
   /* icons: line glyphs on raised plates, as on Studio Hub */
   :root { --plate-a: #ffffff; --plate-b: #e9e5dc; --plate-edge: #d6d0c3; --plate-glow: rgba(24,24,27,.16); }
@@ -48,45 +51,67 @@
   @keyframes ic-spin { to { transform: rotate(360deg); } }
   .ln .coin { animation: ic-hop 2.4s cubic-bezier(.5,0,.5,1) infinite; animation-delay: .4s; }
   .km .pin { animation: ic-hop 2.4s cubic-bezier(.5,0,.5,1) infinite; }
+  .nt .coin { animation: ic-hop 2.4s cubic-bezier(.5,0,.5,1) infinite; animation-delay: .8s; }
   @keyframes ic-hop { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-2px); } }
   @media (prefers-reduced-motion: reduce) { .plate svg * { animation: none !important; } .plate { transition: none; } }
 </style>
 </head>
 <body>
+<div class="corner"><div class="seg" data-lang-seg role="group" aria-label="Language"><button type="button" data-l="en">EN</button><button type="button" data-l="sv">SV</button></div></div>
 <h1>Sverige <span>Live</span></h1>
-<p class="lead">Dashboards on Swedish open data. They update when the agencies publish.</p>
+<p class="lead" data-t="lead">Dashboards on Swedish open data. They update when the agencies publish.</p>
 
 <nav id="grid" aria-label="Dashboards">
   <a class="tile" href="economy/">
     <span class="icon"><span class="plate"><svg class="ec" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5v17h17"/><path class="trend" pathLength="1" d="M6.5 15l3.5-4 3 2.5 5-6"/><path d="M15.5 7.5H18V10"/></g></svg></span></span>
-    <span class="txt"><b>Economy <em>Sweden</em></b><small>Inflation, the policy rate, jobs, house prices and confidence</small>
-      <span class="now"><span><b id="e1">–</b>inflation</span><span><b id="e2">–</b>policy rate</span></span></span>
+    <span class="txt"><b data-t="ecoT">Economy <em>Sweden</em></b><small data-t="ecoD">Inflation, the policy rate, jobs, house prices and confidence</small>
+      <span class="now"><span><b id="e1">–</b><span data-t="infl">inflation</span></span><span><b id="e2">–</b><span data-t="rate">policy rate</span></span></span></span>
   </a>
   <a class="tile" href="goteborg/">
     <span class="icon"><span class="plate"><svg class="gb" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.2"/><g class="rays"><path d="M12 2.5v1.6M12 13.9v1.6M5.5 9h1.6M16.9 9h1.6M7.4 4.4l1.1 1.1M15.5 12.5l1.1 1.1M7.4 13.6l1.1-1.1M15.5 5.5l1.1-1.1"/></g><path d="M3.5 19c1.4 0 1.4-1 2.8-1s1.4 1 2.8 1 1.4-1 2.9-1 1.4 1 2.8 1 1.4-1 2.8-1 1.4 1 2.9 1"/></g></svg></span></span>
-    <span class="txt"><b>Göteborg <em>now</em></b><small>Weather, electricity production and price, police reports</small>
-      <span class="now"><span><b id="g1">–</b>Göteborg A</span><span><b id="g2">–</b>Sweden producing</span></span></span>
+    <span class="txt"><b data-t="gbgT">Göteborg <em>now</em></b><small data-t="gbgD">Weather, electricity production and price, police reports</small>
+      <span class="now"><span><b id="g1">–</b>Göteborg A</span><span><b id="g2">–</b><span data-t="prod">Sweden producing</span></span></span></span>
   </a>
   <a class="tile" href="kommuner/">
     <span class="icon"><span class="plate"><svg class="km" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6.5l5.5-2 6 2 5.5-2v13l-5.5 2-6-2-5.5 2z"/><path d="M9 4.5v13M15 6.5v13"/><g class="pin"><path d="M12 13.2s-2.6-2.4-2.6-4.2a2.6 2.6 0 0 1 5.2 0c0 1.8-2.6 4.2-2.6 4.2z" fill="var(--plate-a)"/><circle cx="12" cy="9" r=".9" fill="currentColor" stroke="none"/></g></g></svg></span></span>
-    <span class="txt"><b>Kommuner <em>compared</em></b><small>All 290 on a map: tax, schools, care, health, jobs, safety</small>
-      <span class="now"><span><b>290</b>kommuner</span><span><b id="k1">–</b>tax, Göteborg</span></span></span>
+    <span class="txt"><b data-t="komT">Kommuner <em>compared</em></b><small data-t="komD">All 290 on a map: tax, schools, care, health, jobs, safety</small>
+      <span class="now"><span><b>290</b>kommuner</span><span><b id="k1">–</b><span data-t="tax">tax, Göteborg</span></span></span></span>
   </a>
   <a class="tile" href="loner/">
     <span class="icon"><span class="plate"><svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8" width="17" height="11" rx="2"/><path d="M8.5 8V6.2c0-.9.7-1.7 1.7-1.7h3.6c.9 0 1.7.8 1.7 1.7V8"/><path d="M3.5 13h17"/><g class="coin"><circle cx="12" cy="13" r="1.6" fill="var(--plate-a)"/></g></g></svg></span></span>
-    <span class="txt"><b>Löner <em>by occupation</em></b><small>Pay for all 429 occupations: spread, women and men, age, region, job ads</small>
-      <span class="now"><span><b id="l1">–</b>median, all jobs</span><span><b id="l2">–</b>top median</span></span></span>
+    <span class="txt"><b data-t="lonT">Löner <em>by occupation</em></b><small data-t="lonD">Pay for all 429 occupations: spread, women and men, age, region, a forecast, job ads</small>
+      <span class="now"><span><b id="l1">–</b><span data-t="medAll">median, all jobs</span></span><span><b id="l2">–</b><span data-t="topMed">top median</span></span></span></span>
+  </a>
+  <a class="tile wide" href="netto/">
+    <span class="icon"><span class="plate"><svg class="nt" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5h15v11h-15z"/><path d="M4.5 10h15"/><path d="M8 14h3"/><g class="coin"><circle cx="16" cy="14.2" r="1.7" fill="var(--plate-a)"/></g></g></svg></span></span>
+    <span class="txt"><b data-t="netT">Netto <em>take-home pay</em></b><small data-t="netD">What a salary leaves after tax, in your kommun and in all 290</small></span>
   </a>
 </nav>
 
 <footer>
-  Data from SCB, Sveriges Riksbank, Konjunkturinstitutet, SMHI, Svenska kraftnät, Polisen, Kolada and Arbetsförmedlingen. Each page names its sources.<br>
+  <span data-t="foot">Data from SCB, Sveriges Riksbank, Konjunkturinstitutet, SMHI, Svenska kraftnät, Polisen, Kolada, Arbetsförmedlingen and Skatteverket. Each page names its sources.</span><br>
   <a href="https://github.com/rajathpi/sverige-live">Source on GitHub</a> · MIT
 </footer>
 
 <script src="assets/js/core.js"></script>
 <script>
 (async function () {
+  const TEXT = {
+    en: {},
+    sv: {
+      lead: "Paneler med svensk öppen data. De uppdateras när myndigheterna publicerar.",
+      ecoT: "Ekonomi <em>Sverige</em>", ecoD: "Inflation, styrräntan, jobb, bostadspriser och förtroende", infl: "inflation", rate: "styrränta",
+      gbgT: "Göteborg <em>nu</em>", gbgD: "Väder, elproduktion och elpris, polisens händelser", prod: "Sverige producerar",
+      komT: "Kommuner <em>jämförda</em>", komD: "Alla 290 på en karta: skatt, skola, omsorg, hälsa, jobb, trygghet", tax: "skatt, Göteborg",
+      lonT: "Löner <em>per yrke</em>", lonD: "Lön för alla 429 yrken: spridning, kvinnor och män, ålder, region, prognos, platsannonser", medAll: "median, alla yrken", topMed: "högsta median",
+      netT: "Netto <em>lön efter skatt</em>", netD: "Vad en lön blir efter skatt, i din kommun och i alla 290",
+      foot: "Data från SCB, Sveriges Riksbank, Konjunkturinstitutet, SMHI, Svenska kraftnät, Polisen, Kolada, Arbetsförmedlingen och Skatteverket. Varje sida anger sina källor."
+    }
+  };
+  // English is the markup itself, so it is captured once before any switch.
+  document.querySelectorAll("[data-t]").forEach((el) => { TEXT.en[el.dataset.t] = el.innerHTML; });
+  SL.initLang(); SL.applyText(TEXT);
+  addEventListener("sl:lang", () => SL.applyText(TEXT));
   const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
   try {
     const d = await SL.fetchJSON("data/economy.json?v=" + Math.floor(Date.now() / 600000));
@@ -101,7 +126,8 @@
     const day = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm" }).format(new Date());
     const pr = await SL.fetchJSON(`https://www.svk.se/services/controlroom/v2/production?date=${day}&countryCode=SE`, { cacheMinutes: 10 });
     const tot = (pr.Data || []).find((s) => String(s.id ?? s.name) === "1");
-    if (tot && tot.data.length) set("g2", SL.fmt(tot.data[tot.data.length - 1].y / 1000, 1) + " GW");
+    const pts = tot ? tot.data.filter((d) => d.y != null) : [];
+    if (pts.length) set("g2", SL.fmt(pts[pts.length - 1].y / 1000, 1) + " GW");
   } catch (e) { /* ignore */ }
   try {
     const k = await SL.fetchJSON("https://api.kolada.se/v3/data/kpi/N00901/municipality/1480/year/" + [0, 1, 2].map((i) => new Date().getFullYear() + 1 - i).join(","), { cacheMinutes: 60 });
