@@ -184,7 +184,8 @@ def main() -> int:
     }
     if OUT.exists():
         old = json.loads(OUT.read_text(encoding="utf-8"))
-        if {k: v for k, v in old.items() if k != "generated"} == {k: v for k, v in out.items() if k != "generated"}:
+        # Compared in saved form: the horizon keys are ints in memory and strings in the file.
+        if {k: v for k, v in old.items() if k != "generated"} == {k: v for k, v in json.loads(json.dumps(out)).items() if k != "generated"}:
             print("no change; data/loner-forecast.json left unchanged")
             return 0
     OUT.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
