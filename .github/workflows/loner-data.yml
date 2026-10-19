@@ -1,0 +1,52 @@
+name: Update Löner data
+
+on:
+  schedule:
+    - cron: "10 4 * * *"   # UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: loner-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install --quiet numpy certifi
+
+      - name: Fetch the salary figures
+        run: python scripts/update_loner.py
+
+      - name: Build the forecast
+        run: python scripts/forecast_loner.py
+
+      - name: Commit if anything changed
+        run: |
+          git add data/loner.json data/loner-forecast.json
+          if git diff --cached --quiet; then
+            echo "No new data."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "data: loner update $(date -u +%Y-%m-%d)"
+          # A push to main during the run makes a plain push fail.
+          for attempt in 1 2 3 4; do
+            git pull --rebase && git push && exit 0
+            git rebase --abort 2>/dev/null || true
+            echo "Push attempt $attempt failed, retrying"
+            sleep $((attempt * 5))
+          done
+          exit 1
