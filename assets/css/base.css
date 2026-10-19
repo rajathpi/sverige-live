@@ -10,7 +10,8 @@
   --border-strong: var(--h-border2);
   --text: var(--h-text);
   --muted: var(--h-muted);
-  --faint: var(--h-muted2);
+  /* The kit's lightest grey is about 3:1 on the panels; this one reaches 4.5:1 for small source lines. */
+  --faint: #77726a;
   --accent: var(--h-text);
   --accent-soft: var(--h-accent-bg);
   --accent-2: var(--h-amber);
@@ -27,6 +28,8 @@
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 :root[data-theme="dark"] {
+  /* The kit's muted greys sit near 3:1 on dark panels; these reach about 4.5:1 and keep muted above faint. */
+  --muted: #a7a8b1; --faint: #8f9099;
   --c1: #9ecbff; --c2: #f0a04a; --c3: #8fd19e; --c4: #c4a7e7; --c5: #f85149; --c6: #7fd1d6; --c7: #e3b341; --c8: #8a8b94;
   --shadow: 0 1px 0 rgba(255, 255, 255, .05) inset, 0 8px 20px -12px rgba(0, 0, 0, .6);
 }
@@ -111,3 +114,4 @@ svg .axis path, svg .axis line { stroke: var(--border-strong); }
 .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--faint); font-size: 12.5px; display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; }
 .footer a { color: var(--muted); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+

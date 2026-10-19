@@ -44,16 +44,15 @@
   const fmt = (v, d = 0) => (v == null || !isFinite(v) ? "–" : nf(d).format(v));
   const pct = (v, d = 1) => (v == null || !isFinite(v) ? "–" : nf(d).format(v) + " %");
   const signed = (v, d = 1, unit = "") => (v == null || !isFinite(v) ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "±") + nf(d).format(Math.abs(v)) + unit);
-  const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  const sv = () => document.documentElement.lang === "sv";
+  const dateFmt = { en: new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }), sv: new Intl.DateTimeFormat("sv-SE", { day: "numeric", month: "short", year: "numeric" }) };
   const timeFmt = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Stockholm" });
-  const fmtDate = (d) => dateFmt.format(d instanceof Date ? d : new Date(d));
+  const fmtDate = (d) => dateFmt[sv() ? "sv" : "en"].format(d instanceof Date ? d : new Date(d));
   const fmtTime = (d) => timeFmt.format(d instanceof Date ? d : new Date(d));
   function timeAgo(d) {
-    const s = (Date.now() - new Date(d).getTime()) / 1000;
-    if (s < 60) return "just now";
-    if (s < 3600) return Math.round(s / 60) + " min ago";
-    if (s < 86400) return Math.round(s / 3600) + " h ago";
-    return Math.round(s / 86400) + " days ago";
+    const s = (Date.now() - new Date(d).getTime()) / 1000, n = (v) => Math.round(v);
+    if (sv()) return s < 60 ? "nyss" : s < 3600 ? n(s / 60) + " min sedan" : s < 86400 ? n(s / 3600) + " h sedan" : n(s / 86400) === 1 ? "1 dag sedan" : n(s / 86400) + " dagar sedan";
+    return s < 60 ? "just now" : s < 3600 ? n(s / 60) + " min ago" : s < 86400 ? n(s / 3600) + " h ago" : n(s / 86400) === 1 ? "1 day ago" : n(s / 86400) + " days ago";
   }
 
   /* ---------- tooltip shared by all charts ---------- */
@@ -80,5 +79,72 @@
 
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  window.SL = { fetchJSON, fmt, pct, signed, fmtDate, fmtTime, timeAgo, tip, hideTip, setStatus, onResize, onTheme, css, isDark, esc };
+  /* ---------- language: one choice for every page, ?lang= wins, then the stored choice ---------- */
+  const lang = () => (root.lang === "sv" ? "sv" : "en");
+  function initLang() {
+    let l = new URLSearchParams(location.search).get("lang");
+    try { l = l || localStorage.getItem("slLang") || localStorage.getItem("lonLang"); } catch (e) { /* storage blocked */ }
+    root.lang = l === "sv" ? "sv" : "en";
+    syncLangSeg();
+    return lang();
+  }
+  function syncLangSeg() { document.querySelectorAll("[data-lang-seg] [data-l]").forEach((b) => b.classList.toggle("on", b.dataset.l === lang())); }
+  function setLang(l) {
+    l = l === "sv" ? "sv" : "en";
+    try { localStorage.setItem("slLang", l); localStorage.setItem("lonLang", l); } catch (e) { /* storage blocked */ }
+    if (l === lang()) { syncLangSeg(); return; }
+    root.lang = l;
+    const p = new URLSearchParams(location.search);
+    if (l === "en") p.delete("lang"); else p.set("lang", l);
+    const qs = p.toString().replace(/%2C/g, ",");
+    history.replaceState(null, "", location.pathname + (qs ? "?" + qs : "") + location.hash);
+    syncLangSeg();
+    dispatchEvent(new CustomEvent("sl:lang", { detail: { lang: l } }));
+  }
+  document.addEventListener("click", (e) => { const b = e.target.closest("[data-lang-seg] [data-l]"); if (b) setLang(b.dataset.l); });
+  // Fills every [data-t] element from TEXT[lang][key]; values may hold inline HTML.
+  function applyText(TEXT, scope = document) {
+    const d = TEXT[lang()] || TEXT.en;
+    scope.querySelectorAll("[data-t]").forEach((el) => { const v = d[el.dataset.t] ?? TEXT.en[el.dataset.t]; if (v != null) el.innerHTML = v; });
+  }
+  const translator = (TEXT) => (k, vars) => {
+    let s = (TEXT[lang()] && TEXT[lang()][k]) ?? TEXT.en[k] ?? k;
+    if (vars && typeof s === "string") for (const [a, b] of Object.entries(vars)) s = s.split("{" + a + "}").join(b);
+    return s;
+  };
+
+  /* ---------- "Show as table" under a chart: build() returns {caption, cols, rows}; it reruns whenever the chart redraws ---------- */
+  const TBL = { en: ["Show as table", "Hide table"], sv: ["Visa som tabell", "Dölj tabell"] };
+  function tableToggle(chartEl, build) {
+    if (!chartEl || chartEl.dataset.tbl) return;
+    chartEl.dataset.tbl = "1";
+    const btn = document.createElement("button"), box = document.createElement("div");
+    btn.type = "button"; btn.className = "lnk tbl-tog"; btn.setAttribute("aria-expanded", "false");
+    box.className = "dtable"; box.hidden = true;
+    chartEl.after(btn, box);
+    const label = () => (btn.textContent = TBL[lang()][box.hidden ? 0 : 1]);
+    const render = () => {
+      if (box.hidden) return;
+      let d; try { d = build(); } catch (e) { d = null; }
+      if (!d || !d.rows || !d.rows.length) { box.innerHTML = `<p class="empty">–</p>`; return; }
+      const cell = (v) => (typeof v === "number" ? fmt(v, Number.isInteger(v) ? 0 : 1) : esc(v ?? "–"));
+      box.innerHTML = `<table>${d.caption ? `<caption>${esc(d.caption)}</caption>` : ""}<thead><tr>${d.cols.map((c) => `<th scope="col">${esc(c)}</th>`).join("")}</tr></thead>` +
+        `<tbody>${d.rows.map((r) => `<tr>${r.map((v, i) => (i === 0 ? `<th scope="row">${cell(v)}</th>` : `<td>${cell(v)}</td>`)).join("")}</tr>`).join("")}</tbody></table>`;
+    };
+    btn.addEventListener("click", () => { box.hidden = !box.hidden; btn.setAttribute("aria-expanded", String(!box.hidden)); label(); render(); });
+    let t; new MutationObserver(() => { clearTimeout(t); t = setTimeout(render, 60); }).observe(chartEl, { childList: true });
+    addEventListener("sl:lang", () => { label(); render(); });
+    addEventListener("lon:lang", () => { label(); render(); });
+    label();
+  }
+
+  /* ---------- the shared top nav follows <html lang>, whichever script set it ---------- */
+  const NAV = { economy: ["Economy", "Ekonomi"], goteborg: ["Göteborg", "Göteborg"], kommuner: ["Kommuner", "Kommuner"], loner: ["Löner", "Löner"], netto: ["Netto", "Netto"] };
+  function navText() {
+    document.querySelectorAll(".nav a").forEach((a) => { const k = (a.getAttribute("href") || "").replace(/\.\.\/|\//g, ""); if (NAV[k]) a.textContent = NAV[k][lang() === "sv" ? 1 : 0]; });
+  }
+  new MutationObserver(navText).observe(root, { attributes: true, attributeFilter: ["lang"] });
+  addEventListener("DOMContentLoaded", navText);
+
+  window.SL = { fetchJSON, fmt, pct, signed, fmtDate, fmtTime, timeAgo, tip, hideTip, setStatus, onResize, onTheme, css, isDark, esc, lang, initLang, setLang, applyText, translator, tableToggle };
 })();
