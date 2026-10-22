@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-21T18:41:20Z",
+ "generated": "2026-10-22T13:00:12Z",
  "series": {
   "cpif": {
    "label": "Inflation, CPIF",
@@ -8448,9 +8448,9 @@
    "label": "Policy rate",
    "unit": "%",
    "freq": "D",
-   "updated": "2026-10-21",
+   "updated": "2026-10-22",
    "latest": [
-    "2026-10-21",
+    "2026-10-22",
     1.75
    ],
    "monthly": [
@@ -10040,10 +10040,6 @@
    "freq": "D",
    "updated": "2026-10-21",
    "points": [
-    [
-     "2024-08-12",
-     11.4935
-    ],
     [
      "2024-08-13",
      11.506
@@ -13537,7 +13533,7 @@
    "source": "Konjunkturinstitutet, Barometerindikatorn",
    "freq": "M",
    "updated": "2026-09-22T20:47:14Z",
-   "next": "2026-10-22",
+   "next": "2026-11-23",
    "nextExpected": true,
    "url": "https://www.konj.se/english/publications/economic-tendency-survey.html"
   },
@@ -14833,7 +14829,7 @@
    "source": "Konjunkturinstitutet, Konfidensindikator hushåll",
    "freq": "M",
    "updated": "2026-09-22T20:47:14Z",
-   "next": "2026-10-22",
+   "next": "2026-11-23",
    "nextExpected": true,
    "url": "https://www.konj.se/english/publications/economic-tendency-survey.html"
   }
