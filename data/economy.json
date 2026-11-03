@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-02T17:08:13Z",
+ "generated": "2026-11-03T15:14:19Z",
  "series": {
   "cpif": {
    "label": "Inflation, CPIF",
@@ -8480,9 +8480,9 @@
    "label": "Policy rate",
    "unit": "%",
    "freq": "D",
-   "updated": "2026-11-02",
+   "updated": "2026-11-03",
    "latest": [
-    "2026-11-02",
+    "2026-11-03",
     1.75
    ],
    "monthly": [
