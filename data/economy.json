@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-04T15:28:11Z",
+ "generated": "2026-11-05T15:31:56Z",
  "series": {
   "cpif": {
    "label": "Inflation, CPIF",
@@ -8480,9 +8480,9 @@
    "label": "Policy rate",
    "unit": "%",
    "freq": "D",
-   "updated": "2026-11-04",
+   "updated": "2026-11-05",
    "latest": [
-    "2026-11-04",
+    "2026-11-05",
     1.75
    ],
    "monthly": [
@@ -10061,12 +10061,11 @@
      1.75
     ]
    ],
-   "next": "2026-11-04",
+   "next": "2026-12-16",
    "nextExpected": false,
    "source": "Sveriges Riksbank, policy rate (SECBREPOEFF)",
    "url": "https://www.riksbank.se/en-gb/statistics/interest-rates-and-exchange-rates/policy-rate-deposit-and-lending-rate/",
    "decisions": [
-    "2026-11-04",
     "2026-12-16"
    ]
   },
@@ -10074,12 +10073,8 @@
    "label": "EUR/SEK",
    "unit": "SEK",
    "freq": "D",
-   "updated": "2026-11-04",
+   "updated": "2026-11-05",
    "points": [
-    [
-     "2024-08-26",
-     11.403
-    ],
     [
      "2024-08-27",
      11.3758
@@ -12275,6 +12270,10 @@
     [
      "2026-11-04",
      10.9718
+    ],
+    [
+     "2026-11-05",
+     10.9845
     ]
    ],
    "next": null,
