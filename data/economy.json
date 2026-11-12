@@ -1,13 +1,13 @@
 {
- "generated": "2026-11-11T15:17:20Z",
+ "generated": "2026-11-12T15:59:52Z",
  "series": {
   "cpif": {
    "label": "Inflation, CPIF",
    "unit": "%",
    "freq": "M",
    "target": 2.0,
-   "updated": "2026-10-14T06:00:00Z",
-   "next": "2026-11-16",
+   "updated": "2026-11-12T07:00:00Z",
+   "next": "2026-12-14",
    "nextExpected": true,
    "source": "SCB, CPIF annual change (TAB6590)",
    "url": "https://www.scb.se/en/finding-statistics/statistics-by-subject-area/prices-and-consumption/consumer-price-index/",
@@ -1295,6 +1295,10 @@
     [
      "2026-09",
      1.5
+    ],
+    [
+     "2026-10",
+     1.1
     ]
    ]
   },
@@ -1302,8 +1306,8 @@
    "label": "Inflation, CPI",
    "unit": "%",
    "freq": "M",
-   "updated": "2026-10-14T06:00:00Z",
-   "next": "2026-11-16",
+   "updated": "2026-11-12T07:00:00Z",
+   "next": "2026-12-14",
    "nextExpected": true,
    "source": "SCB, CPI annual change (TAB6596)",
    "url": "https://www.scb.se/en/finding-statistics/statistics-by-subject-area/prices-and-consumption/consumer-price-index/",
@@ -2591,6 +2595,10 @@
     [
      "2026-09",
      1.1
+    ],
+    [
+     "2026-10",
+     0.9
     ]
    ]
   },
@@ -8480,9 +8488,9 @@
    "label": "Policy rate",
    "unit": "%",
    "freq": "D",
-   "updated": "2026-11-11",
+   "updated": "2026-11-12",
    "latest": [
-    "2026-11-11",
+    "2026-11-12",
     2
    ],
    "monthly": [
@@ -10077,12 +10085,8 @@
    "label": "EUR/SEK",
    "unit": "SEK",
    "freq": "D",
-   "updated": "2026-11-11",
+   "updated": "2026-11-12",
    "points": [
-    [
-     "2024-09-02",
-     11.351
-    ],
     [
      "2024-09-03",
      11.372
@@ -12278,6 +12282,10 @@
     [
      "2026-11-11",
      11.051
+    ],
+    [
+     "2026-11-12",
+     11.0628
     ]
    ],
    "next": null,
