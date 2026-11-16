@@ -136,8 +136,7 @@
     set("g1", SL.fmt(+t.value[t.value.length - 1].value, 1) + " °C");
   } catch (e) { /* ignore */ }
   try {
-    const day = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm" }).format(new Date());
-    const pr = await SL.fetchJSON(`https://www.svk.se/services/controlroom/v2/production?date=${day}&countryCode=SE`, { cacheMinutes: 10 });
+    const pr = await SL.fetchJSON("https://raw.githubusercontent.com/rajathpi/sverige-live/svk-data/production.json", { cacheMinutes: 10 });
     const tot = (pr.Data || []).find((s) => String(s.id ?? s.name) === "1");
     const pts = tot ? tot.data.filter((d) => d.y != null) : [];
     if (pts.length) set("g2", SL.fmt(pts[pts.length - 1].y / 1000, 1) + " GW");

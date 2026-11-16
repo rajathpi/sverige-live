@@ -47,7 +47,7 @@ Plain HTML, CSS and JavaScript with [D3](https://d3js.org) for the charts. No bu
 Some agencies send the CORS headers a web page needs, so those pages call the
 APIs directly from your browser:
 
-- SMHI open data, Svenska kraftnät's control room, Polisen's events API, Kolada, SCB's PxWebApi, JobTech and Skatteverket's open data are fetched by `goteborg/`, `kommuner/`, `loner/` and `netto/` every time the page opens. `goteborg/` also refreshes on a timer while it stays open (paused when the tab is hidden), and `economy/` reloads its data when you come back to a tab left open for more than 30 minutes.
+- SMHI open data, Polisen's events API, Kolada, SCB's PxWebApi, JobTech and Skatteverket's open data are fetched by `goteborg/`, `kommuner/`, `loner/` and `netto/` every time the page opens. `goteborg/` also refreshes on a timer while it stays open (paused when the tab is hidden), and `economy/` reloads its data when you come back to a tab left open for more than 30 minutes.
 - Löner's default view (all sectors) comes from a nightly snapshot, [`data/loner.json`](data/loner.json), so the page draws without waiting on SCB; other sectors and the age, education and region breakdowns are still fetched live. [`scripts/update_loner.py`](scripts/update_loner.py) writes it and [`scripts/forecast_loner.py`](scripts/forecast_loner.py) writes the forecast, both from [`.github/workflows/loner-data.yml`](.github/workflows/loner-data.yml) at 04:10 UTC, committing only when something changed.
 
 The Riksbank's SWEA API and Konjunkturinstitutet's statistics database cannot be
@@ -55,6 +55,7 @@ called from a browser, so the economy figures are collected by a scheduled job:
 
 - [`.github/workflows/update-data.yml`](.github/workflows/update-data.yml) runs [`scripts/update_economy.py`](scripts/update_economy.py) at 07:20, 09:20 and 14:20 UTC on weekdays. That catches SCB's 08:00 releases, the Riksbank's 09:30 decisions and Konjunkturinstitutet's morning publications within a couple of hours.
 - The script writes [`data/economy.json`](data/economy.json) and only commits when a number actually changed, so the history shows one commit per real release.
+- Svenska kraftnät's control room API stopped sending CORS headers in October 2026, so [`.github/workflows/svk-data.yml`](.github/workflows/svk-data.yml) copies today's production and SE3 figures every 15 minutes to the `svk-data` branch. `goteborg/` and the landing page read them from there through `raw.githubusercontent.com`. The branch holds a single force-pushed commit, so it adds no history to `main` and does not redeploy the site.
 - Upcoming Riksbank decisions are read from the Riksbank's public calendar. SCB and Konjunkturinstitutet dates are estimated from each agency's regular rhythm and shown as "≈ expected".
 
 Run it yourself (Python 3.9+, standard library plus optional `certifi`):
