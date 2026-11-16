@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-13T15:26:47Z",
+ "generated": "2026-11-16T17:05:07Z",
  "series": {
   "cpif": {
    "label": "Inflation, CPIF",
@@ -2607,7 +2607,7 @@
    "unit": "%",
    "freq": "M",
    "updated": "2026-10-16T06:00:00Z",
-   "next": "2026-11-16",
+   "next": "2026-12-16",
    "nextExpected": true,
    "source": "SCB, Labour Force Survey, 15–74, seasonally adjusted (TAB6387)",
    "url": "https://www.scb.se/en/finding-statistics/statistics-by-subject-area/labour-market/labour-force-surveys/labour-force-surveys-lfs/",
@@ -8488,9 +8488,9 @@
    "label": "Policy rate",
    "unit": "%",
    "freq": "D",
-   "updated": "2026-11-13",
+   "updated": "2026-11-16",
    "latest": [
-    "2026-11-13",
+    "2026-11-16",
     2
    ],
    "monthly": [
@@ -10085,20 +10085,8 @@
    "label": "EUR/SEK",
    "unit": "SEK",
    "freq": "D",
-   "updated": "2026-11-13",
+   "updated": "2026-11-16",
    "points": [
-    [
-     "2024-09-04",
-     11.411
-    ],
-    [
-     "2024-09-05",
-     11.3995
-    ],
-    [
-     "2024-09-06",
-     11.3698
-    ],
     [
      "2024-09-09",
      11.455
@@ -12286,6 +12274,10 @@
     [
      "2026-11-13",
      11.1075
+    ],
+    [
+     "2026-11-16",
+     11.095
     ]
    ],
    "next": null,
@@ -13588,7 +13580,7 @@
    "source": "Konjunkturinstitutet, Barometerindikatorn",
    "freq": "M",
    "updated": "2026-10-14T05:10:56Z",
-   "next": "2026-11-16",
+   "next": "2026-12-14",
    "nextExpected": true,
    "url": "https://www.konj.se/english/publications/economic-tendency-survey.html"
   },
@@ -14888,7 +14880,7 @@
    "source": "Konjunkturinstitutet, Konfidensindikator hushåll",
    "freq": "M",
    "updated": "2026-10-14T05:10:56Z",
-   "next": "2026-11-16",
+   "next": "2026-12-14",
    "nextExpected": true,
    "url": "https://www.konj.se/english/publications/economic-tendency-survey.html"
   }
