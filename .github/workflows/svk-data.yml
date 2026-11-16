@@ -8,8 +8,6 @@ on:
   schedule:
     - cron: "*/15 * * * *"   # SvK publishes 15-minute values
   workflow_dispatch:
-  push:
-    branches: [fix/svk-cors]
 
 permissions:
   contents: write
