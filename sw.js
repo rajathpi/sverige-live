@@ -3,7 +3,7 @@
    only answers when the network fails. Versioned CDN files (D3, fonts) are served from the cache first. */
 const VERSION = "sl-v1";
 const PAGES = ["./", "economy/", "goteborg/", "kommuner/", "loner/", "netto/"];
-const DATA_HOSTS = ["api.scb.se", "opendata-download-metobs.smhi.se", "opendata-download-metfcst.smhi.se", "www.svk.se", "polisen.se", "api.kolada.se",
+const DATA_HOSTS = ["api.scb.se", "opendata-download-metobs.smhi.se", "opendata-download-metfcst.smhi.se", "raw.githubusercontent.com", "polisen.se", "api.kolada.se",
   "www.elprisetjustnu.se", "jobsearch.api.jobtechdev.se", "taxonomy.api.jobtechdev.se", "skatteverket.entryscape.net"];
 const IMMUTABLE_HOSTS = ["cdnjs.cloudflare.com", "cdn.jsdelivr.net"];
 const MAX_DATA = 400;

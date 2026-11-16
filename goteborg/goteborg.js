@@ -296,10 +296,10 @@
   ];
   const mixName = (m) => tx("mix_" + m.key);
   async function loadSvk() {
-    const today = dayKey(Date.now());
+    // svk.se sends no CORS header; .github/workflows/svk-data.yml mirrors it every 15 minutes.
     const [pr, si] = await Promise.allSettled([
-      SL.fetchJSON(`https://www.svk.se/services/controlroom/v2/production?date=${today}&countryCode=SE`),
-      SL.fetchJSON(`https://www.svk.se/services/controlroom/v2/situation?date=${today}&biddingArea=SE3`),
+      SL.fetchJSON("https://raw.githubusercontent.com/rajathpi/sverige-live/svk-data/production.json"),
+      SL.fetchJSON("https://raw.githubusercontent.com/rajathpi/sverige-live/svk-data/situation.json"),
     ]);
     if (pr.status !== "fulfilled") throw pr.reason;
     const by = {};
